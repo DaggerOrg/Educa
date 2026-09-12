@@ -1,0 +1,674 @@
+/* Dark is the default (toggled via ThemeToggle -> theme.ts, which sets
+   [data-theme] on <html>, not prefers-color-scheme). Both palettes are
+   converted directly from learn-x.co's own shipped shadcn/ui HSL custom
+   properties -- dark from its .dark{} block (--background 210 20% 8%,
+   --primary 195 65% 50%, ...), light from its bare :root{} block
+   (--background 40 20% 99%, --primary 195 68% 32%, ...), including the
+   real *-foreground pairings (e.g. light --warning-foreground is near-
+   black, not white -- amber is too bright for white text). A categorical
+   hue system (accent/success/warning/destructive/violet/orange) replaces
+   the earlier single-accent palette, matching that reference's per-
+   feature colored icon badges. Draft stays neutral, approved reads via
+   the accent (in progress/selected), published uses --success (shipped/
+   final). See docs/design-system.md. */
+:root{
+  --paper: #101418; --paper-raised: #171C21; --paper-sunken: #23292F;
+  --ink: #E2E7E9; --ink-soft: #819098; --ink-faint: #5C6970; --rule: #2B333B;
+  --accent: #2DA9D2; --accent-ink: #071820; --accent-soft: rgba(45,169,210,0.16); --accent-soft-ink: #81CBE4;
+  --success: #39C684; --success-ink: #052316; --success-soft: rgba(57,198,132,0.14); --success-soft-ink: #7BE0B2;
+  --warning: #F4A825; --warning-ink: #2B1A00; --warning-soft: rgba(244,168,37,0.14); --warning-soft-ink: #F8C170;
+  --destructive: #D34545; --destructive-ink: #FFFFFF; --destructive-soft: rgba(211,69,69,0.16); --destructive-soft-ink: #F0A0A0;
+  --violet: #8B66CC; --violet-ink: #FFFFFF;
+  --orange: #F09942; --orange-ink: #2B1300;
+  --done: var(--success); --done-ink: var(--success-ink);
+  --shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.5);
+}
+:root[data-theme="light"]{
+  --paper: #FDFDFC; --paper-raised: #FFFFFF; --paper-sunken: #F1F3F4;
+  --ink: #21282C; --ink-soft: #5C6970; --ink-faint: #8A949B; --rule: #DCE2E5;
+  --accent: #1A6D89; --accent-ink: #FFFFFF; --accent-soft: rgba(26,109,137,0.10); --accent-soft-ink: #14556B;
+  --success: #29A36A; --success-ink: #FFFFFF; --success-soft: rgba(41,163,106,0.12); --success-soft-ink: #1D7A4F;
+  --warning: #F59F0A; --warning-ink: #1A1A1A; --warning-soft: rgba(245,159,10,0.14); --warning-soft-ink: #8A5A06;
+  --destructive: #DC2828; --destructive-ink: #FFFFFF; --destructive-soft: rgba(220,40,40,0.10); --destructive-soft-ink: #B01E1E;
+  --violet: #673AB6; --violet-ink: #FFFFFF;
+  --orange: #E66B19; --orange-ink: #FFFFFF;
+  --shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.10);
+}
+*{ box-sizing:border-box; }
+html, body, #root{ height:100%; }
+body{ margin:0; background:var(--paper); color:var(--ink); font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; font-size:15px; line-height:1.55; }
+h1,h2,h3,h4{ font-family:'Inter',sans-serif; font-weight:800; letter-spacing:-0.01em; margin:0; }
+input, textarea, button, select{ font-family:inherit; font-size:inherit; color:inherit; }
+/* No global anchor reset existed before this -- every <Link>/<a> without
+   its own color-setting class (.btn, .course-card, etc. are fine; a bare
+   <Link> is not) fell back to the browser's default blue/underline, which
+   is what showed up as an off-palette blue against the rest of this
+   black+light-blue theme. */
+a{ color:inherit; text-decoration:none; }
+.text-link{ color:var(--accent); text-decoration:underline; }
+
+.layout{ display:flex; flex-direction:column; height:100%; position:relative; }
+.topbar{ padding:0.8rem 1.5rem; border-bottom:1px solid var(--rule); background:var(--paper); display:flex; align-items:center; justify-content:space-between; }
+.wordmark{ font-family:'Inter',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:-0.01em; }
+.wordmark span{ color:var(--accent); }
+
+.topbar-right{ display:flex; align-items:center; gap:0.9rem; min-width:0; overflow-x:auto; }
+.course-switcher{ flex-shrink:0; }
+.topbar-account{ flex-shrink:0; }
+.topbar-email{ white-space:nowrap; }
+.ask-ai-btn{ display:flex; align-items:center; gap:0.4rem; }
+.ask-ai-btn svg{ width:14px; height:14px; color:var(--accent); }
+.ask-ai-btn.is-active{ background:var(--accent-soft); border-color:var(--accent-soft); color:var(--accent-soft-ink); }
+.ask-ai-btn.is-active svg{ color:var(--accent-soft-ink); }
+
+.topbar-account{ display:flex; align-items:center; gap:0.7rem; }
+.topbar-email{ font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--ink-faint); }
+.topbar-logout{ padding:0.35rem 0.7rem; font-size:0.78rem; }
+.theme-toggle{ padding:0.4rem; }
+.theme-toggle svg{ width:15px; height:15px; }
+
+/* Workspace: labeled nav drawer (collapsible to icon-only) + outline sidebar
+   / welcome panel + lesson stage */
+.workspace{ flex:1; display:flex; min-height:0; }
+
+.nav-drawer{
+  width:190px; flex-shrink:0; border-right:1px solid var(--rule); display:flex; flex-direction:column;
+  justify-content:space-between; padding:0.9rem 0.6rem; transition:width 0.15s ease;
+}
+.nav-drawer.is-collapsed{ width:56px; padding:0.9rem 0.5rem; align-items:center; }
+
+/* Wraps the course-authoring items and the pinned-to-bottom group below so
+   the latter (Settings, and anything else about the platform rather than a
+   course) sits just above the collapse toggle regardless of how many items
+   are in either group. */
+.nav-drawer-scroll{ flex:1; min-height:0; display:flex; flex-direction:column; justify-content:space-between; width:100%; }
+.nav-drawer-items{ display:flex; flex-direction:column; gap:0.25rem; width:100%; }
+.nav-drawer-bottom{ display:flex; flex-direction:column; gap:0.25rem; width:100%; padding-top:0.6rem; border-top:1px solid var(--rule); }
+
+.nav-drawer-btn{
+  width:100%; height:38px; border-radius:8px; border:1px solid transparent; background:transparent;
+  color:var(--ink-soft); display:flex; align-items:center; gap:0.6rem; padding:0 0.6rem; cursor:pointer;
+  font-weight:600; font-size:0.82rem; text-align:left;
+}
+.nav-drawer-btn svg{ width:18px; height:18px; flex-shrink:0; }
+.nav-drawer-btn.is-active{ background:var(--paper-raised); border-color:var(--rule); color:var(--accent); box-shadow:var(--shadow); }
+.nav-drawer.is-collapsed .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+.nav-drawer.is-collapsed .nav-drawer-label{ display:none; }
+
+.nav-drawer-toggle{
+  align-self:flex-end; width:28px; height:28px; border-radius:8px; border:1px solid var(--rule);
+  background:transparent; color:var(--ink-faint); display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.nav-drawer-toggle-icon{ width:14px; height:14px; transition:transform 0.15s ease; }
+.nav-drawer.is-collapsed .nav-drawer-toggle{ align-self:center; }
+.nav-drawer.is-collapsed .nav-drawer-toggle-icon{ transform:rotate(180deg); }
+
+@media (max-width:640px){
+  .nav-drawer{ width:56px; padding:0.9rem 0.5rem; align-items:center; }
+  .nav-drawer .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+  .nav-drawer .nav-drawer-label{ display:none; }
+  .nav-drawer .nav-drawer-toggle{ display:none; }
+}
+
+.workspace-main{ flex:1; display:flex; min-height:0; }
+@media (max-width:860px){
+  .workspace-main{ flex-direction:column; overflow-y:auto; }
+}
+
+.workspace-error{ margin:1.2rem 1.5rem 0; }
+
+.error-banner{ background:var(--destructive-soft); color:var(--destructive-soft-ink); border-radius:8px; padding:0.6rem 0.9rem; font-size:0.85rem; margin-bottom:1rem; }
+
+/* Guided empty state, shown in the main stage until a course exists */
+.welcome-panel{ margin:auto; max-width:420px; padding:2rem; text-align:left; }
+.welcome-panel h2{ font-size:1.35rem; margin-bottom:1.2rem; }
+.welcome-steps{ list-style:none; margin:0 0 1.6rem; padding:0; display:flex; flex-direction:column; gap:0.9rem; counter-reset:step; }
+.welcome-steps li{ display:flex; gap:0.7rem; font-size:0.88rem; color:var(--ink-soft); counter-increment:step; }
+.welcome-steps li::before{
+  content:counter(step); flex-shrink:0; width:22px; height:22px; border-radius:50%;
+  background:var(--paper-sunken); color:var(--ink); font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem; display:flex; align-items:center; justify-content:center;
+}
+.welcome-steps strong{ color:var(--ink); }
+.welcome-cta{ display:inline-flex; align-items:center; gap:0.45rem; }
+.welcome-cta svg{ width:14px; height:14px; }
+
+.course-title{ font-size:1.3rem; font-weight:600; margin-bottom:0.2rem; }
+.course-audience{ color:var(--ink-soft); font-size:0.85rem; margin:0 0 0.9rem; }
+
+/* Studio's course-builder landing page (SyllabusView.tsx) -- a full-width
+   module/lesson browser in place of the old fixed 300px outline sidebar,
+   reusing Educa's .educa-page reading-column treatment per the shared
+   brand. Editing (title/objective/publish) now lives on the lesson's own
+   page (LessonPanel.tsx) instead of inline in this list. */
+.course-overview .course-title{ font-size:1.6rem; }
+
+/* Course-level completion, à la a Moodle course-progress bar */
+.course-progress{ margin-bottom:1.3rem; }
+.progress-track{ height:6px; border-radius:3px; background:var(--paper-sunken); overflow:hidden; }
+.progress-fill{ height:100%; background:var(--accent); border-radius:3px; transition:width 0.2s ease; }
+.progress-label{ display:block; margin-top:0.35rem; font-family:'JetBrains Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
+
+.week-block{ margin-bottom:1.6rem; }
+.week-head{
+  width:100%; display:flex; align-items:center; gap:0.4rem; border:none; background:transparent; cursor:pointer;
+  font-family:'JetBrains Mono',monospace; font-size:0.72rem; letter-spacing:0.05em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:0.6rem; padding:0.2rem 0; text-align:left;
+}
+.week-chevron{ width:11px; height:11px; flex-shrink:0; transition:transform 0.15s ease; }
+.week-chevron.is-collapsed{ transform:rotate(-90deg); }
+.week-head-title{ flex:1; }
+.week-head-count{ color:var(--ink-faint); }
+
+/* Also used as a plain full-width <button> in Studio's own course overview
+   (SyllabusView.tsx) -- Educa's traditional course-detail page renders the
+   exact same markup as a <Link>, so both need block-level, unstyled-button
+   sizing rather than relying on either element's native default. */
+.lesson-row{
+  border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:0.85rem 1rem;
+  margin-bottom:0.65rem; cursor:pointer; display:flex; flex-direction:column; gap:0.3rem;
+  width:100%; text-align:left; font:inherit;
+}
+.lesson-row:hover{ border-color:var(--ink-soft); }
+.lesson-row-top{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; }
+.lesson-row-top strong{ font-size:0.95rem; }
+
+.status-pill{ font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.05em; text-transform:uppercase; padding:0.1rem 0.45rem; border-radius:6px; width:fit-content; flex-shrink:0; }
+.status-draft{ background:var(--paper-sunken); color:var(--ink-soft); }
+.status-approved{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+.status-published{ background:var(--done); color:var(--done-ink); }
+
+.empty-panel{ color:var(--ink-faint); padding:2rem 0; }
+.lesson-breadcrumb{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.4rem; }
+.panel-head-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:0.8rem; }
+.panel-head{ margin-bottom:1rem; }
+/* Studio's lesson page: title/objective are still hand-editable inline
+   (SRS FR-1.4 -- a manual edit here must survive an unrelated chat-driven
+   refinement), just styled to read as plain page-header text rather than a
+   visible form field until focused. */
+.lesson-page-title-input{
+  flex:1; min-width:0; border:none; background:transparent; font-family:'Inter',sans-serif;
+  font-weight:800; font-size:1.2rem; padding:0.1rem 0;
+}
+.lesson-page-objective-input{
+  display:block; width:100%; border:none; background:transparent; color:var(--ink-soft);
+  font-size:0.88rem; padding:0.1rem 0; margin-top:0.2rem;
+}
+.lesson-page-title-input:focus, .lesson-page-objective-input:focus{ outline:1px dashed var(--rule); }
+.hint{ color:var(--ink-faint); font-size:0.88rem; }
+.hint-inline{ display:block; font-size:0.76rem; color:var(--ink-faint); margin-top:0.4rem; }
+
+.slides-list{ display:flex; flex-direction:column; gap:0.7rem; margin-bottom:1rem; }
+.slide-card{ border:1px solid var(--rule); border-radius:12px; padding:0.7rem 0.9rem; background:var(--paper-raised); }
+.slide-card h4{ font-size:0.95rem; margin-bottom:0.3rem; }
+.slide-card ul{ margin:0; padding-left:1.1rem; color:var(--ink-soft); font-size:0.88rem; }
+
+.field-label{ display:block; font-family:'JetBrains Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.35rem; }
+.notes-block, .quiz-block, .publish-block{ margin-bottom:1.1rem; }
+.quiz-question{ font-weight:600; margin:0 0 0.4rem; }
+.quiz-options{ margin:0; padding-left:1.2rem; }
+.quiz-options li.is-correct{ color:var(--success); font-weight:600; }
+
+.check-row{ display:flex; align-items:center; gap:0.5rem; font-size:0.85rem; margin-bottom:0.6rem; }
+
+.hitl-card{ border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:0.8rem 0.9rem; margin:0.3rem 0; box-shadow:var(--shadow); max-width:420px; }
+.hitl-card-label{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.5rem; }
+.hitl-card-body{ font-size:0.85rem; }
+.hitl-field{ margin:0 0 0.15rem; }
+.hitl-field-sub{ margin:0 0 0.6rem; color:var(--ink-soft); font-size:0.82rem; }
+.hitl-week{ margin-bottom:0.6rem; }
+.hitl-lesson-list{ margin:0; padding-left:1.1rem; color:var(--ink-soft); font-size:0.85rem; }
+.hitl-card-actions{ display:flex; gap:0.5rem; margin-top:0.7rem; }
+.hitl-card-actions .btn{ display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.7rem; font-size:0.8rem; }
+.hitl-card-actions .btn svg{ width:13px; height:13px; }
+.btn{ border-radius:8px; border:1px solid var(--rule); background:var(--paper-raised); padding:0.5rem 0.9rem; font-weight:600; cursor:pointer; font-size:0.85rem; display:inline-flex; align-items:center; gap:0.4rem; white-space:nowrap; flex-shrink:0; }
+.btn:disabled{ opacity:0.55; cursor:default; }
+/* Default icon size for a bare icon dropped into a .btn -- a more specific
+   rule (e.g. .hitl-card-actions .btn svg) still wins by specificity. */
+.btn svg{ width:14px; height:14px; flex-shrink:0; }
+.btn-primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+
+.auth-screen{ height:100%; display:flex; align-items:center; justify-content:center; background:var(--paper); padding:1.5rem; }
+.auth-card{ width:100%; max-width:360px; background:var(--paper-raised); border:1px solid var(--rule); border-radius:12px; box-shadow:var(--shadow); padding:1.75rem 1.75rem 1.5rem; }
+.auth-wordmark{ font-size:1.3rem; text-align:center; margin-bottom:1.4rem; }
+
+.auth-tabs{ display:flex; border:1px solid var(--rule); border-radius:8px; padding:0.2rem; margin-bottom:1.3rem; background:var(--paper-sunken); }
+.auth-tab{ flex:1; border:none; background:transparent; border-radius:6px; padding:0.45rem 0; font-weight:600; font-size:0.82rem; color:var(--ink-soft); cursor:pointer; }
+.auth-tab.is-active{ background:var(--paper-raised); color:var(--ink); box-shadow:var(--shadow); }
+
+.auth-form{ display:flex; flex-direction:column; }
+.auth-form .field-label{ margin-top:0.9rem; }
+.auth-form .field-label:first-child{ margin-top:0; }
+.auth-input{ border:1px solid var(--rule); border-radius:8px; background:var(--paper); padding:0.55rem 0.7rem; }
+.auth-input:focus{ outline:1px solid var(--accent); border-color:var(--accent); }
+
+.auth-error{ margin-top:0.9rem; margin-bottom:0; }
+.auth-submit{ margin-top:1.3rem; width:100%; text-align:center; }
+.auth-hint{ text-align:center; margin:1.1rem 0 0; font-size:0.78rem; }
+.auth-hint code{ font-family:'JetBrains Mono',monospace; background:var(--paper-sunken); border-radius:4px; padding:0.05rem 0.3rem; }
+
+/* "Ask AI" chat overlay -- a drawer instead of a fixed rail, toggled from
+   the topbar so the outline/lesson editor gets the full stage by default. */
+.chat-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.15); z-index:20; }
+.chat-drawer{
+  position:fixed; top:0; right:0; bottom:0; width:380px; max-width:92vw; z-index:21;
+  background:var(--paper-raised); border-left:1px solid var(--rule); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; min-height:0;
+}
+.chat-drawer-head{
+  display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1.1rem;
+  border-bottom:1px solid var(--rule); font-family:'Inter',sans-serif; font-weight:800; font-size:0.95rem;
+}
+.chat-drawer-close{ border:none; background:transparent; color:var(--ink-soft); cursor:pointer; padding:0.2rem; display:flex; }
+.chat-drawer-close svg{ width:16px; height:16px; }
+.chat-drawer > :last-child{ flex:1; min-height:0; }
+
+@media (max-width:640px){ .chat-drawer{ width:100vw; max-width:100vw; } }
+
+/* Routine -- where a teacher brings in source material (upload or paste).
+   Folded into Home (.home-materials-section) and reachable inline from a
+   lesson (the materials modal in App.tsx). The agent grounds syllabi/
+   lessons in these instead of inventing examples. */
+.routine-panel{ padding:1.2rem 1.5rem; max-width:640px; }
+
+/* Nested inside the "Add material" modal, modal-card already supplies
+   padding/framing and modal-head already supplies a title. */
+.modal-card .routine-panel{ padding:0; max-width:none; }
+
+.routine-tabs{ display:flex; border:1px solid var(--rule); border-radius:8px; padding:0.2rem; margin:0.9rem 0 1.1rem; background:var(--paper-sunken); }
+.routine-tab{ flex:1; border:none; background:transparent; border-radius:6px; padding:0.45rem 0; font-weight:600; font-size:0.82rem; color:var(--ink-soft); cursor:pointer; }
+.routine-tab.is-active{ background:var(--paper-raised); color:var(--ink); box-shadow:var(--shadow); }
+
+.upload-control{ display:flex; align-items:center; gap:0.8rem; margin:1rem 0 1.3rem; }
+.upload-control .btn{ display:inline-flex; align-items:center; }
+.upload-control .is-clickable{ cursor:pointer; }
+.upload-hint{ font-size:0.78rem; color:var(--ink-faint); }
+
+.paste-control{ display:flex; flex-direction:column; gap:0.6rem; margin:1rem 0 1.3rem; }
+.paste-control .btn{ align-self:flex-start; }
+
+.materials-list{ display:flex; flex-direction:column; gap:0.5rem; }
+.material-row{ border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:0.6rem 0.8rem; display:flex; align-items:center; justify-content:space-between; gap:0.8rem; }
+.material-row-main{ display:flex; flex-direction:column; gap:0.15rem; min-width:0; }
+.material-filename{ font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.material-meta{ font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--ink-faint); }
+.material-delete{ border:none; background:transparent; color:var(--ink-soft); cursor:pointer; padding:0.3rem; display:flex; flex-shrink:0; }
+.material-delete svg{ width:14px; height:14px; }
+.material-delete:hover{ color:var(--ink); }
+
+/* Auth: role toggle (signup only) -- same segmented-control look as the
+   login/signup tabs above it. */
+.auth-role-toggle{ display:flex; border:1px solid var(--rule); border-radius:8px; padding:0.2rem; margin-top:0.4rem; background:var(--paper-sunken); }
+.auth-role-btn{ flex:1; border:none; background:transparent; border-radius:6px; padding:0.4rem 0; font-weight:600; font-size:0.8rem; color:var(--ink-soft); cursor:pointer; }
+.auth-role-btn.is-active{ background:var(--paper-raised); color:var(--ink); box-shadow:var(--shadow); }
+
+/* Studio: course switcher, next to "Ask AI" in the topbar */
+.course-switcher{ border:1px solid var(--rule); border-radius:8px; background:var(--paper-raised); padding:0.4rem 0.6rem; font-weight:600; font-size:0.82rem; max-width:200px; }
+.course-switcher:focus{ outline:1px solid var(--accent); border-color:var(--accent); }
+
+/* Traditional (/educa) platform: catalog, course detail, lesson + quiz --
+   reuses Studio's page chrome (.layout/.topbar) but its own content area,
+   since there's no chat drawer or two-column workspace here. */
+.educa-body{ flex:1; overflow-y:auto; }
+.educa-page{ max-width:760px; margin:0 auto; padding:1.6rem 1.5rem 3rem; }
+.educa-page-title{ font-size:1.4rem; margin-bottom:0.3rem; }
+.educa-back{ display:inline-block; margin-bottom:1rem; }
+.educa-empty{ display:flex; flex-direction:column; align-items:flex-start; gap:1rem; margin-top:1rem; }
+
+.course-card-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:0.9rem; margin-top:1.2rem; }
+.course-card{
+  display:flex; flex-direction:column; gap:0.4rem; border:1px solid var(--rule); border-radius:12px;
+  background:var(--paper-raised); padding:1rem 1.1rem; text-decoration:none; color:inherit;
+}
+.course-card h3{ font-size:1rem; }
+.course-card-audience{ color:var(--ink-soft); font-size:0.85rem; margin:0; }
+.course-card-catalog{ justify-content:space-between; }
+.course-card-link{ text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:0.4rem; }
+
+/* Studio: "My Courses" grid + Marketplace -- both reuse .course-card-grid/
+   .course-card above; these extend that pattern rather than replace it. */
+.courses-list, .marketplace, .home-hub{ padding:1.2rem 1.5rem; max-width:920px; }
+.courses-list-head{ display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.home-hub .courses-list-head{ margin-top:2rem; }
+.courses-list-head h2, .marketplace h2{ font-size:1.3rem; }
+.courses-list-head .btn{ display:inline-flex; align-items:center; gap:0.4rem; }
+.courses-list-head .btn svg{ width:14px; height:14px; }
+
+/* Home: a Canva-style hub -- a prompt to start a new course (sends
+   straight to the curriculum_team agent, see Home.tsx), starter
+   suggestion chips, materials folded in below, then existing work. */
+.home-prompt-section{ text-align:center; padding:2rem 0 1.5rem; }
+.home-prompt-section h2{ font-size:1.6rem; margin-bottom:1.1rem; }
+.home-prompt-form{ display:flex; gap:0.6rem; max-width:560px; margin:0 auto; }
+.home-prompt-input{ flex:1; padding:0.7rem 0.9rem; }
+.home-suggestions{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem; margin-top:1rem; }
+.home-suggestion-chip{
+  border:1px solid var(--rule); border-radius:999px; background:var(--paper-raised); color:var(--ink-soft);
+  padding:0.4rem 0.9rem; font-size:0.8rem; cursor:pointer;
+}
+.home-suggestion-chip:hover{ color:var(--ink); border-color:var(--ink-soft); }
+.home-suggestion-chip:disabled{ opacity:0.55; cursor:default; }
+
+.home-materials-section{ margin-top:1.8rem; padding-top:1.6rem; border-top:1px solid var(--rule); }
+.home-materials-section h3{ font-size:1.05rem; margin-bottom:0.2rem; }
+.home-materials-section .routine-panel{ padding:0; max-width:none; }
+
+/* Home, mid-conversation: describing a course on Home turns the same main
+   stage into a full ChatGPT-style thread (Home.tsx's `chatStarted`) instead
+   of navigating to Course builder or opening the .chat-drawer side panel --
+   the nav-drawer beside it is untouched. */
+.home-hub.is-chat{ display:flex; flex-direction:column; padding:0; max-width:none; width:100%; min-height:0; }
+.home-chat{ display:flex; flex-direction:column; flex:1; min-height:0; animation:home-chat-in 0.32s cubic-bezier(0.16,1,0.3,1); }
+.home-chat > :last-child{ flex:1; min-height:0; }
+.home-chat-head{
+  display:flex; align-items:center; gap:0.7rem; padding:0.9rem 1.4rem; border-bottom:1px solid var(--rule);
+  font-family:'Inter',sans-serif; font-weight:800; font-size:0.95rem; flex-shrink:0;
+}
+.home-chat-back{
+  border:1px solid var(--rule); border-radius:8px; background:transparent; color:var(--ink-soft); cursor:pointer;
+  width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.home-chat-back svg{ width:14px; height:14px; }
+.home-chat-back:hover{ color:var(--ink); border-color:var(--ink-soft); }
+
+@keyframes home-chat-in{
+  from{ opacity:0; transform:translateY(14px) scale(0.99); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+.course-card-main{
+  border:none; background:transparent; padding:0; margin:0; text-align:left; cursor:pointer;
+  display:flex; flex-direction:column; gap:0.3rem; color:inherit; width:100%;
+}
+.course-card-meta{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
+.course-card-footer{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; margin-top:0.3rem; padding-top:0.6rem; border-top:1px solid var(--rule); }
+.course-card-listed{ display:inline-flex; align-items:center; gap:0.3rem; border:none; cursor:pointer; }
+.course-card-listed svg{ width:11px; height:11px; }
+.course-card-unlist{ padding:0.3rem 0.6rem; font-size:0.76rem; }
+
+/* Marketplace: search + browse grid + listing detail */
+.marketplace-intro{ max-width:60ch; margin:0.3rem 0 1.2rem; }
+.marketplace-search{ position:relative; max-width:360px; margin-bottom:1.2rem; }
+.marketplace-search-icon{ position:absolute; left:0.7rem; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--ink-faint); pointer-events:none; }
+.marketplace-search-input{ width:100%; padding-left:2rem; }
+
+.listing-card{
+  border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:1rem 1.1rem;
+  text-align:left; cursor:pointer; display:flex; flex-direction:column; gap:0.35rem;
+}
+.listing-card:hover{ border-color:var(--accent); }
+.listing-card-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:0.6rem; }
+.listing-card-top h3{ font-size:1rem; }
+.listing-description{ color:var(--ink-soft); font-size:0.85rem; margin:0; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.listing-price{
+  display:inline-flex; align-items:center; gap:0.25rem; flex-shrink:0; font-weight:700; font-size:0.92rem;
+  color:var(--accent-soft-ink); background:var(--accent-soft); border-radius:6px; padding:0.15rem 0.5rem;
+}
+.listing-price svg{ width:11px; height:11px; }
+.listing-price-lg{ font-size:1.2rem; padding:0.35rem 0.8rem; }
+
+.listing-back{ margin-bottom:1.2rem; display:inline-flex; align-items:center; gap:0.4rem; }
+.listing-back svg{ width:13px; height:13px; }
+.listing-detail-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:0.8rem; }
+.listing-outline{ margin:0.6rem 0; display:flex; flex-direction:column; gap:0.8rem; }
+.listing-buy{ margin-top:1.2rem; }
+.listing-bought{ max-width:480px; }
+.listing-bought-badge{ display:inline-flex; align-items:center; gap:0.35rem; margin-bottom:1rem; }
+.listing-bought-badge svg{ width:11px; height:11px; }
+.listing-bought h2{ margin-bottom:0.5rem; }
+.listing-bought .btn{ margin-top:1rem; }
+
+.topbar-listed{ display:inline-flex; align-items:center; gap:0.3rem; border:none; cursor:pointer; }
+.topbar-listed svg{ width:11px; height:11px; }
+
+/* Small centered modal (ListingForm) -- distinct from the full-height
+   .chat-drawer side panel used elsewhere. */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:30; display:flex; align-items:center; justify-content:center; padding:1.5rem; }
+.modal-card{ width:100%; max-width:420px; background:var(--paper-raised); border:1px solid var(--rule); border-radius:12px; box-shadow:var(--shadow); padding:1.3rem 1.4rem 1.5rem; }
+.modal-card--wide{ max-width:560px; }
+.modal-head{ display:flex; align-items:center; justify-content:space-between; font-weight:800; margin-bottom:1rem; }
+.modal-close{ border:none; background:transparent; color:var(--ink-soft); cursor:pointer; padding:0.2rem; display:flex; }
+.modal-close svg{ width:16px; height:16px; }
+.modal-textarea{ resize:vertical; font-family:inherit; width:100%; }
+
+.educa-week-list{ margin-top:1.2rem; }
+.educa-lesson-link{ text-decoration:none; color:inherit; display:block; }
+.lesson-objective-text{ margin:0; color:var(--ink-soft); font-size:0.85rem; }
+
+/* Quiz-taking (student view) -- radio list instead of Studio's read-only
+   options, plus a submit/result/attempt-history flow LessonPanel doesn't need. */
+.quiz-options-list{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.9rem; }
+.quiz-option-row{
+  display:flex; align-items:center; gap:0.6rem; border:1px solid var(--rule); border-radius:8px;
+  padding:0.5rem 0.7rem; font-size:0.88rem; cursor:pointer;
+}
+.quiz-option-row.is-selected{ border-color:var(--accent); }
+.quiz-option-row.is-correct{ border-color:var(--success); background:var(--success-soft); }
+.quiz-option-row.is-wrong{ border-color:var(--destructive); background:var(--destructive-soft); }
+.quiz-result{ margin-bottom:1rem; }
+.quiz-result-correct{ color:var(--success); font-weight:600; }
+.quiz-result-wrong{ color:var(--destructive); font-weight:600; }
+.quiz-attempt-history{ margin-top:1rem; }
+
+/* Lecturers' chat (TeacherChat.tsx) -- a full-height panel like the
+   knowledge graph (.kg-page) rather than a padded/scrollable content block
+   like Marketplace/Home, since it needs a composer pinned to the bottom. */
+.teacher-chat{ display:flex; flex-direction:column; height:100%; min-height:0; }
+.teacher-chat-head{ padding:0.9rem 1.2rem; border-bottom:1px solid var(--rule); flex-shrink:0; }
+.teacher-chat-head h2{ display:flex; align-items:center; gap:0.5rem; font-size:1.1rem; }
+.teacher-chat-head h2 svg{ width:18px; height:18px; color:var(--accent); }
+.teacher-chat-head p{ margin:0.3rem 0 0; }
+.teacher-chat-error{ margin:0.8rem 1.2rem 0; }
+
+.teacher-chat-messages{ flex:1; min-height:0; overflow-y:auto; padding:1rem 1.2rem; display:flex; flex-direction:column; gap:0.6rem; }
+.teacher-chat-empty{ margin:auto; }
+
+.chat-message{
+  border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:0.55rem 0.8rem;
+  max-width:640px; display:flex; flex-direction:column; gap:0.2rem;
+}
+.chat-message.is-own{ border-color:var(--accent); align-self:flex-end; }
+.chat-message-meta{
+  display:flex; align-items:center; gap:0.5rem; font-family:'JetBrains Mono',monospace; font-size:0.66rem;
+  letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint);
+}
+.chat-message-author{ color:var(--ink-soft); font-weight:600; }
+.chat-message-course-tag{ background:var(--accent-soft); color:var(--accent-soft-ink); border-radius:6px; padding:0.05rem 0.4rem; }
+.chat-message-body{ margin:0; font-size:0.9rem; white-space:pre-wrap; word-break:break-word; }
+
+.teacher-chat-composer{ border-top:1px solid var(--rule); padding:0.8rem 1.2rem; flex-shrink:0; }
+.teacher-chat-composer-row{ display:flex; gap:0.5rem; align-items:flex-end; }
+.teacher-chat-course-select{
+  border:1px solid var(--rule); border-radius:8px; background:var(--paper); padding:0.5rem 0.5rem;
+  font-size:0.78rem; max-width:170px; flex-shrink:0;
+}
+.teacher-chat-textarea{
+  flex:1; border:1px solid var(--rule); border-radius:8px; background:var(--paper); padding:0.55rem 0.7rem;
+  resize:none; font-family:inherit; min-height:2.5rem; max-height:8rem;
+}
+.teacher-chat-textarea:focus{ outline:1px solid var(--accent); border-color:var(--accent); }
+.teacher-chat-send{ flex-shrink:0; }
+.quiz-attempt-list{ margin:0; padding-left:1.1rem; color:var(--ink-soft); font-size:0.82rem; }
+
+/* Account menu -- dropdown opened from the topbar avatar trigger (replaces
+   the old plain email + Log out button pair in Studio's .topbar-account). */
+.account-menu{ position:relative; }
+.account-trigger{
+  display:flex; align-items:center; gap:0.55rem; border:1px solid var(--rule); border-radius:8px;
+  background:var(--paper-raised); padding:0.3rem 0.6rem 0.3rem 0.3rem; cursor:pointer; font-family:inherit; color:inherit;
+}
+.account-trigger.is-open{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.account-trigger-avatar{
+  width:26px; height:26px; border-radius:50%; background:var(--accent-soft); color:var(--accent-soft-ink);
+  display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace;
+  font-size:0.68rem; font-weight:600; flex-shrink:0;
+}
+.account-trigger-name{ font-size:0.8rem; font-weight:600; white-space:nowrap; }
+.account-trigger svg{ width:13px; height:13px; color:var(--ink-faint); flex-shrink:0; transition:transform 0.1s ease; }
+.account-trigger.is-open svg{ transform:rotate(180deg); }
+
+.account-menu-panel{
+  position:absolute; top:calc(100% + 8px); right:0; width:288px; z-index:25;
+  background:var(--paper-raised); border:1px solid var(--rule); border-radius:12px; box-shadow:var(--shadow);
+  padding:0.5rem; display:flex; flex-direction:column;
+}
+.account-menu-identity{ padding:0.6rem 0.7rem 0.7rem; }
+.account-menu-name{ font-weight:700; font-size:0.9rem; }
+.account-menu-email{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--ink-faint); margin-top:0.15rem; }
+.account-menu-plan-row{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; padding:0.4rem 0.7rem 0.6rem; font-size:0.8rem; color:var(--ink-soft); white-space:nowrap; }
+.account-menu-plan-row .plan-pill{ white-space:nowrap; }
+.account-menu-rule{ height:1px; background:var(--rule); margin:0.3rem 0; }
+.account-menu-item{
+  display:flex; align-items:center; gap:0.6rem; padding:0.55rem 0.7rem; border-radius:8px; cursor:pointer;
+  font-size:0.83rem; font-weight:600; color:var(--ink); border:none; background:transparent; text-align:left;
+  width:100%; font-family:inherit;
+}
+.account-menu-item:hover{ background:var(--paper-sunken); }
+.account-menu-item svg{ width:16px; height:16px; color:var(--ink-soft); flex-shrink:0; }
+.account-menu-item.is-danger{ color:var(--destructive-soft-ink); }
+.account-menu-item.is-danger svg{ color:var(--destructive-soft-ink); }
+.account-menu-item-chevron{ margin-left:auto; display:flex; }
+.account-menu-item-chevron svg{ width:12px; height:12px; color:var(--ink-faint); }
+
+/* Account menu modals -- mock screens for Language / Legal & privacy /
+   Give feedback / Help & docs, reached from the account menu above. Educa
+   isn't localized and has no published legal docs or help site yet, so
+   these render static placeholder content rather than working features. */
+.account-modal-list{ display:flex; flex-direction:column; gap:0.15rem; margin-bottom:0.9rem; }
+.account-modal-row{
+  display:flex; align-items:center; justify-content:space-between; gap:0.6rem; padding:0.55rem 0.7rem;
+  border-radius:8px; border:none; background:transparent; cursor:pointer; font-size:0.85rem; font-weight:600;
+  color:var(--ink); text-align:left; font-family:inherit; width:100%;
+}
+button.account-modal-row:hover{ background:var(--paper-sunken); }
+.account-modal-row.is-selected{ color:var(--accent); }
+.account-modal-row.is-selected svg{ width:14px; height:14px; }
+.account-modal-row.is-static{ color:var(--ink-soft); font-weight:500; cursor:default; }
+.account-modal-note{ color:var(--ink-faint); font-size:0.8rem; margin:0; }
+.account-modal-sent{ display:flex; flex-direction:column; align-items:flex-start; gap:0.9rem; }
+.account-modal-sent p{ margin:0; font-size:0.9rem; }
+
+/* Settings: left sub-nav + content panel, reached via the nav-drawer's
+   pinned-to-bottom Settings item or the account menu above. Usage/cost/log
+   figures in the "AI usage & limits" tab are placeholders -- Agno already
+   records per-run input/output tokens (see backend/app/agents/team.py's
+   SqliteDb), but those rows aren't scoped to a user and there's no pricing
+   table yet, so nothing real can be aggregated here until that pipeline
+   exists. */
+.settings-page{ flex:1; display:flex; min-height:0; }
+
+/* Collapsible to icon-only, same mechanism as the main .nav-drawer. */
+.settings-nav{
+  width:200px; flex-shrink:0; border-right:1px solid var(--rule); padding:1.4rem 1rem; display:flex;
+  flex-direction:column; justify-content:space-between; transition:width 0.15s ease;
+}
+.settings-nav.is-collapsed{ width:56px; padding:1.4rem 0.5rem; align-items:center; }
+.settings-nav-items{ display:flex; flex-direction:column; gap:0.2rem; width:100%; }
+.settings-nav h1{ font-size:1.05rem; padding:0 0.5rem; margin-bottom:0.6rem; white-space:nowrap; }
+.settings-nav.is-collapsed h1{ display:none; }
+.settings-nav-btn{
+  width:100%; display:flex; align-items:center; gap:0.6rem; border:1px solid transparent; border-radius:8px; background:transparent;
+  color:var(--ink-soft); padding:0.55rem 0.6rem; font-weight:600; font-size:0.83rem; cursor:pointer; text-align:left; font-family:inherit;
+}
+.settings-nav-btn svg{ width:16px; height:16px; flex-shrink:0; }
+.settings-nav-btn.is-active{ background:var(--paper-raised); border-color:var(--rule); color:var(--ink); box-shadow:var(--shadow); }
+.settings-nav-btn.is-active svg{ color:var(--accent); }
+.settings-nav.is-collapsed .settings-nav-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+.settings-nav.is-collapsed .settings-nav-label{ display:none; }
+
+.settings-nav-toggle{
+  align-self:flex-end; width:28px; height:28px; border-radius:8px; border:1px solid var(--rule); flex-shrink:0;
+  background:transparent; color:var(--ink-faint); display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.settings-nav-toggle-icon{ width:14px; height:14px; transition:transform 0.15s ease; }
+.settings-nav.is-collapsed .settings-nav-toggle{ align-self:center; }
+.settings-nav.is-collapsed .settings-nav-toggle-icon{ transform:rotate(180deg); }
+
+.settings-content{ flex:1; min-width:0; overflow-y:auto; padding:1.6rem 2rem 2.5rem; }
+.settings-content-head{ margin-bottom:1.3rem; max-width:760px; }
+.settings-content-head h2{ font-size:1.25rem; margin-bottom:0.3rem; }
+.settings-content-head p{ margin:0; color:var(--ink-soft); font-size:0.88rem; }
+
+.settings-stack{ display:flex; flex-direction:column; gap:1rem; max-width:1080px; }
+.settings-row-2{ display:grid; grid-template-columns:1.1fr 1fr; gap:1rem; align-items:start; }
+.settings-row-3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem; }
+@media (max-width:1100px){ .settings-row-2, .settings-row-3{ grid-template-columns:1fr; } }
+
+.settings-card{ border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:1.1rem 1.2rem; }
+.settings-card-title{ font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; margin-bottom:0.9rem; }
+.settings-card-title svg{ width:15px; height:15px; color:var(--ink-soft); }
+
+.plan-pill{
+  font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.05em; text-transform:uppercase;
+  background:var(--accent-soft); color:var(--accent-soft-ink); border-radius:6px; padding:0.15rem 0.5rem;
+}
+
+/* Account tab */
+.account-profile{ display:flex; align-items:center; gap:0.9rem; }
+.account-profile-avatar{
+  width:48px; height:48px; border-radius:50%; background:var(--accent-soft); color:var(--accent-soft-ink);
+  display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:0.95rem;
+  font-weight:600; flex-shrink:0;
+}
+.account-profile-main{ display:flex; flex-direction:column; gap:0.15rem; }
+.account-profile-name{ font-weight:700; font-size:1rem; }
+.account-profile-email{ font-family:'JetBrains Mono',monospace; font-size:0.76rem; color:var(--ink-faint); }
+.account-plan-row{ display:flex; align-items:center; justify-content:space-between; margin-top:1rem; padding-top:1rem; border-top:1px solid var(--rule); font-size:0.85rem; }
+
+/* AI usage & limits tab */
+.model-card{ display:flex; align-items:center; gap:0.9rem; }
+.model-badge{
+  width:42px; height:42px; border-radius:10px; background:var(--accent-soft); color:var(--accent-soft-ink);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.model-badge svg{ width:22px; height:22px; }
+.model-card-main{ flex:1; min-width:0; display:flex; flex-direction:column; gap:0.15rem; }
+.model-card-title{ font-weight:700; font-size:0.95rem; }
+.model-card-sub{ color:var(--ink-soft); font-size:0.82rem; }
+.model-tag{
+  font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.03em; color:var(--ink-faint);
+  background:var(--paper-sunken); border-radius:6px; padding:0.2rem 0.5rem; flex-shrink:0; white-space:nowrap;
+}
+
+.stat-tile-label{
+  display:flex; align-items:center; gap:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.68rem;
+  letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint);
+}
+.stat-tile-label svg{ width:14px; height:14px; }
+.stat-value{ font-family:'JetBrains Mono',monospace; font-size:1.5rem; font-weight:600; letter-spacing:-0.01em; margin-top:0.35rem; }
+.stat-delta{ font-size:0.76rem; color:var(--ink-faint); margin-top:0.2rem; }
+
+.chart-total{ display:flex; align-items:baseline; gap:0.4rem; margin-bottom:0.7rem; }
+.chart-total-value{ font-family:'JetBrains Mono',monospace; font-size:1.3rem; font-weight:600; }
+.chart-total-label{ color:var(--ink-soft); font-size:0.8rem; }
+.chart-range{
+  display:flex; justify-content:space-between; margin-top:0.4rem; font-family:'JetBrains Mono',monospace;
+  font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint);
+}
+
+.meter-row + .meter-row{ margin-top:0.85rem; }
+.meter-head{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; font-size:0.83rem; margin-bottom:0.35rem; }
+.meter-name{ display:flex; align-items:center; gap:0.5rem; font-weight:600; }
+.meter-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.meter-used{ font-family:'JetBrains Mono',monospace; font-size:0.76rem; color:var(--ink-soft); }
+.meter-track{ height:6px; border-radius:3px; background:var(--paper-sunken); overflow:hidden; }
+.meter-fill{ height:100%; border-radius:3px; }
+
+.cost-total-row{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:0.9rem; padding-bottom:0.9rem; border-bottom:1px solid var(--rule); }
+.cost-total-value{ font-family:'JetBrains Mono',monospace; font-size:1.55rem; font-weight:600; }
+.cost-total-label{ color:var(--ink-soft); font-size:0.8rem; }
+.cost-row{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; font-size:0.83rem; padding:0.3rem 0; }
+.cost-row-name{ display:flex; align-items:center; gap:0.5rem; color:var(--ink); }
+.cost-row-value{ font-family:'JetBrains Mono',monospace; color:var(--ink-soft); }
+
+.log-head-row, .log-row{ display:grid; grid-template-columns:0.9fr 1.3fr 1fr 0.8fr 0.7fr; gap:0.6rem; align-items:center; }
+.log-head-row{ padding-bottom:0.5rem; border-bottom:1px solid var(--rule); margin-bottom:0.2rem; }
+.log-head-row span{ font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
+.log-head-row span:nth-child(4), .log-head-row span:nth-child(5){ text-align:right; }
+.log-row{ padding:0.5rem 0; border-bottom:1px solid var(--rule); font-size:0.8rem; }
+.log-row:last-child{ border-bottom:none; }
+.log-feature{ display:flex; align-items:center; gap:0.45rem; font-weight:600; min-width:0; }
+.log-feature span:last-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.log-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.log-time, .log-model{ color:var(--ink-soft); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.log-tokens, .log-cost{ font-family:'JetBrains Mono',monospace; font-size:0.78rem; text-align:right; color:var(--ink-soft); }

@@ -1,0 +1,5 @@
+config:
+  puluminew:cloudName: google-europe-west1
+  puluminew:planName: business-4
+  puluminew:projectName: educa
+  puluminew:serviceName: kafka-gcp-eu

@@ -1,0 +1,168 @@
+/* Knowledge Graph editor -- reuses Studio's existing tokens (--paper*,
+   --ink*, --rule, --accent/--success/--warning/--destructive families,
+   --shadow, 12px card / 8px control radius) throughout. No new hues, no
+   per-node-type color -- node type is communicated by icon + label only;
+   the one thing that gets color is the status badge (success/warning/
+   accent/neutral), matching the rest of the app's semantic-not-decorative
+   use of color. This file is scoped to .kg-* classes only. */
+
+.kg-page{ display:flex; flex-direction:column; height:100%; min-height:0; }
+
+.kg-header{ display:flex; align-items:center; gap:1rem; padding:0.9rem 1.2rem; border-bottom:1px solid var(--rule); flex-wrap:wrap; }
+.kg-breadcrumb{ font-family:'JetBrains Mono',monospace; font-size:0.72rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
+.kg-breadcrumb span{ margin:0 0.3rem; }
+
+.kg-search{ flex:1; max-width:360px; }
+
+.kg-add-menu{ position:relative; flex-shrink:0; margin-left:auto; }
+.kg-add-menu-list{
+  position:absolute; top:calc(100% + 0.4rem); right:0; z-index:15; min-width:200px;
+  background:var(--paper-raised); border:1px solid var(--rule); border-radius:8px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; padding:0.3rem;
+}
+.kg-add-menu-item{ border:none; background:transparent; text-align:left; padding:0.5rem 0.6rem; border-radius:6px; cursor:pointer; font-size:0.85rem; color:var(--ink); }
+.kg-add-menu-item:hover{ background:var(--paper-sunken); }
+
+.kg-page-error{ margin:0.8rem 1.2rem 0; }
+
+.kg-body{ flex:1; display:grid; grid-template-columns:220px 1fr 320px; min-height:0; }
+@media (max-width:1100px){ .kg-body{ grid-template-columns:190px 1fr 280px; } }
+@media (max-width:860px){
+  .kg-body{ grid-template-columns:1fr; grid-template-rows:auto 1fr auto; }
+  .kg-left{ border-right:none; border-bottom:1px solid var(--rule); max-height:220px; }
+  .kg-right{ border-left:none; border-top:1px solid var(--rule); max-height:50vh; }
+}
+
+.kg-left{ border-right:1px solid var(--rule); padding:1rem 0.9rem; overflow-y:auto; display:flex; flex-direction:column; gap:1.3rem; }
+.kg-filters{ display:flex; flex-direction:column; gap:1.1rem; }
+.kg-filter-group{ display:flex; flex-direction:column; gap:0.3rem; }
+.kg-filter-group .check-row{ margin-bottom:0; font-size:0.82rem; }
+
+.kg-legend{ padding-top:1rem; border-top:1px solid var(--rule); display:flex; flex-direction:column; gap:0.5rem; }
+.kg-legend-list{ display:flex; flex-direction:column; gap:0.35rem; }
+.kg-legend-row{ display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:var(--ink-soft); }
+.kg-legend-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.kg-legend-dot-approved{ background:var(--success); }
+.kg-legend-dot-review{ background:var(--warning); }
+.kg-legend-dot-ai{ background:var(--accent); }
+.kg-legend-dot-reviewed{ background:var(--ink-faint); }
+
+.kg-canvas-wrap{ position:relative; min-width:0; min-height:0; background:var(--paper); }
+/* overflow:hidden is required here, not just decorative -- without it,
+   panned nodes/edges near the left edge render their absolutely-
+   positioned content (e.g. EdgeLabelRenderer's portaled labels) a few
+   pixels past this container's boundary, into the filters sidebar's
+   screen space, where they're behind it in paint order and unclickable. */
+.kg-canvas{ position:absolute; inset:0; overflow:hidden; }
+.kg-canvas-toolbar-slot{ position:absolute; top:0.8rem; left:0.8rem; z-index:10; }
+.kg-labels-hidden .kg-edge-label{ display:none; }
+
+.kg-toolbar{ display:flex; align-items:center; gap:0.3rem; background:var(--paper-raised); border:1px solid var(--rule); border-radius:8px; box-shadow:var(--shadow); padding:0.3rem; }
+.kg-toolbar-btn{ padding:0.4rem; }
+.kg-toolbar-btn svg{ width:15px; height:15px; }
+.kg-toolbar-divider{ width:1px; height:20px; background:var(--rule); margin:0 0.15rem; }
+
+.kg-right{ border-left:1px solid var(--rule); overflow-y:auto; }
+.kg-inspector-empty{ padding:1.5rem 1.2rem; }
+.kg-inspector-empty p{ margin-bottom:1.2rem; }
+.kg-summary{ display:flex; flex-direction:column; gap:0.4rem; font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--ink-soft); }
+
+.kg-status-bar{ display:flex; gap:1.4rem; padding:0.55rem 1.2rem; border-top:1px solid var(--rule); font-family:'JetBrains Mono',monospace; font-size:0.72rem; letter-spacing:0.03em; color:var(--ink-faint); }
+
+/* ---- Node card (rendered inside xyflow) ---- */
+.kg-node{
+  width:200px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised);
+  padding:0.6rem 0.7rem; box-shadow:var(--shadow); cursor:pointer;
+}
+.kg-node.is-selected{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.kg-node-type{
+  display:flex; align-items:center; gap:0.3rem; font-family:'JetBrains Mono',monospace; font-size:0.6rem;
+  letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.3rem;
+}
+.kg-node-type-icon{ width:12px; height:12px; flex-shrink:0; }
+.kg-node-name{ font-weight:700; font-size:0.88rem; line-height:1.25; margin-bottom:0.3rem; }
+.kg-node-meta{ display:flex; align-items:center; gap:0.3rem; font-size:0.72rem; color:var(--ink-soft); flex-wrap:wrap; }
+.kg-node-dot{ color:var(--ink-faint); }
+.kg-node-status{ font-weight:600; }
+.kg-status-approved{ color:var(--success); }
+.kg-status-review{ color:var(--warning); }
+.kg-status-ai{ color:var(--accent); }
+.kg-status-reviewed{ color:var(--ink-soft); }
+
+/* ---- Edge (custom xyflow edge) ---- */
+.kg-edge{ stroke:var(--ink-faint); stroke-width:1.5; }
+.kg-edge.is-selected{ stroke:var(--accent); stroke-width:2; }
+.kg-edge-pending{ stroke:var(--warning); stroke-dasharray:5 4; }
+.kg-edge-label{
+  position:absolute; font-family:'JetBrains Mono',monospace; font-size:0.6rem; letter-spacing:0.04em;
+  text-transform:uppercase; color:var(--ink-soft); background:var(--paper); border:1px solid var(--rule);
+  border-radius:4px; padding:0.1rem 0.4rem; pointer-events:all; white-space:nowrap;
+}
+.kg-edge-label.is-selected{ color:var(--accent-ink); background:var(--accent); border-color:var(--accent); }
+.kg-edge-label-pending{ color:var(--warning-ink); background:var(--warning-soft); border-color:var(--warning); }
+
+/* ---- Search ---- */
+.kg-search-results{
+  position:absolute; top:calc(100% + 0.3rem); left:0; right:0; z-index:15;
+  background:var(--paper-raised); border:1px solid var(--rule); border-radius:8px; box-shadow:var(--shadow);
+  max-height:280px; overflow-y:auto; padding:0.3rem;
+}
+.kg-search-empty{ padding:0.5rem 0.6rem; }
+.kg-search-result{
+  display:flex; align-items:center; justify-content:space-between; gap:0.6rem; width:100%;
+  border:none; background:transparent; text-align:left; padding:0.5rem 0.6rem; border-radius:6px; cursor:pointer; color:var(--ink);
+}
+.kg-search-result:hover{ background:var(--paper-sunken); }
+.kg-search-result-name{ font-size:0.85rem; font-weight:600; }
+.kg-search-result-type{ font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-faint); }
+
+/* ---- Inspector (node / edge) ---- */
+.kg-inspector{ padding:1.1rem 1.1rem 1.5rem; display:flex; flex-direction:column; }
+.kg-inspector-head{ margin-bottom:0.8rem; }
+.kg-inspector-title{ font-size:1.1rem; margin-top:0.25rem; }
+.kg-fact-list{ display:grid; grid-template-columns:auto 1fr; gap:0.35rem 0.8rem; margin:0 0 0.9rem; font-size:0.85rem; }
+.kg-fact-list dt{ font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
+.kg-fact-list dd{ margin:0; }
+.kg-inspector-description{ color:var(--ink-soft); font-size:0.88rem; }
+.kg-inspector-section{ margin-bottom:0.9rem; padding-top:0.9rem; border-top:1px solid var(--rule); }
+.kg-inspector-section summary{ cursor:pointer; margin-bottom:0.5rem; list-style:none; }
+.kg-inspector-section summary::-webkit-details-marker{ display:none; }
+.kg-related-list{ display:flex; flex-wrap:wrap; gap:0.4rem; }
+.kg-related-item{
+  border:1px solid var(--rule); background:var(--paper-sunken); border-radius:6px; padding:0.3rem 0.6rem;
+  font-size:0.8rem; cursor:pointer; color:var(--ink);
+}
+.kg-related-item:hover{ border-color:var(--accent); color:var(--accent); }
+.kg-source-list{ display:flex; flex-direction:column; gap:0.4rem; }
+.kg-source-item{
+  display:flex; flex-direction:column; gap:0.1rem; align-items:flex-start; width:100%;
+  border:1px solid var(--rule); background:var(--paper-sunken); border-radius:8px; padding:0.5rem 0.7rem; cursor:pointer; color:var(--ink);
+}
+.kg-source-item:hover{ border-color:var(--accent); }
+.kg-source-item-doc{ font-weight:600; font-size:0.85rem; }
+.kg-source-item-meta{ font-family:'JetBrains Mono',monospace; font-size:0.66rem; color:var(--ink-faint); }
+.kg-inspector-actions{ display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.4rem; padding-top:1rem; border-top:1px solid var(--rule); }
+.kg-approval-banner{ margin-bottom:0.9rem; }
+
+.kg-status-pill-teacher-approved{ background:var(--success-soft); color:var(--success-soft-ink); }
+.kg-status-pill-needs-review{ background:var(--warning-soft); color:var(--warning-soft-ink); }
+.kg-status-pill-ai-generated{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+.kg-status-pill-teacher-reviewed{ background:var(--paper-sunken); color:var(--ink-soft); }
+
+/* ---- Source evidence modal ---- */
+.kg-source-doc{ font-weight:700; font-size:1rem; margin:0 0 0.15rem; }
+.kg-source-excerpt{ margin:0.9rem 0; }
+.kg-source-excerpt p{ font-style:italic; color:var(--ink-soft); margin:0.3rem 0 0; }
+.kg-evidence-explicit{ background:var(--success-soft); color:var(--success-soft-ink); }
+.kg-evidence-llm-inferred{ background:var(--warning-soft); color:var(--warning-soft-ink); }
+.kg-evidence-teacher-added{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+.kg-source-footer{ margin-top:1rem; }
+
+/* ---- Relationship form preview ---- */
+.kg-relationship-preview{ display:flex; flex-direction:column; align-items:center; gap:0.2rem; margin:0.2rem 0 1rem; padding:0.8rem; background:var(--paper-sunken); border-radius:8px; }
+.kg-relationship-node{ font-weight:600; font-size:0.88rem; }
+.kg-relationship-arrow{ color:var(--ink-faint); }
+
+/* ---- Delete dialog ---- */
+.kg-dialog-actions{ display:flex; justify-content:flex-end; gap:0.6rem; margin-top:1.1rem; }
+.kg-btn-danger{ background:var(--destructive); border-color:var(--destructive); color:var(--destructive-ink); }

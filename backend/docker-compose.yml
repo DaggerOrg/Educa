@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: educa
+      POSTGRES_PASSWORD: educa
+      POSTGRES_DB: educa
+    ports:
+      # Host 5432 is already taken by another local Postgres on this
+      # machine -- mapped to 55432 instead, matching DATABASE_URL below.
+      - "55432:5432"
+    volumes:
+      - educa-postgres:/var/lib/postgresql/data
+
+volumes:
+  educa-postgres:

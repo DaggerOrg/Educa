@@ -56,10 +56,10 @@ a{ color:inherit; text-decoration:none; }
 .course-switcher{ flex-shrink:0; }
 .topbar-account{ flex-shrink:0; }
 .topbar-email{ white-space:nowrap; }
-.ask-ai-btn{ display:flex; align-items:center; gap:0.4rem; }
-.ask-ai-btn svg{ width:14px; height:14px; color:var(--accent); }
-.ask-ai-btn.is-active{ background:var(--accent-soft); border-color:var(--accent-soft); color:var(--accent-soft-ink); }
-.ask-ai-btn.is-active svg{ color:var(--accent-soft-ink); }
+.ask-ai-btn, .exercises-chat-btn{ display:flex; align-items:center; gap:0.4rem; }
+.ask-ai-btn svg, .exercises-chat-btn svg{ width:14px; height:14px; color:var(--accent); }
+.ask-ai-btn.is-active, .exercises-chat-btn.is-active{ background:var(--accent-soft); border-color:var(--accent-soft); color:var(--accent-soft-ink); }
+.ask-ai-btn.is-active svg, .exercises-chat-btn.is-active svg{ color:var(--accent-soft-ink); }
 
 .topbar-account{ display:flex; align-items:center; gap:0.7rem; }
 .topbar-email{ font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--ink-faint); }
@@ -110,12 +110,66 @@ a{ color:inherit; text-decoration:none; }
   .nav-drawer .nav-drawer-toggle{ display:none; }
 }
 
+/* Course builder's second-level tool rail -- same look as .nav-drawer's
+   buttons/toggle (reused directly), narrower, and scoped to course
+   builder rather than the whole app. Extensible: CourseToolsRail.tsx adds
+   an entry here per future tool, not just Exercises Builder. */
+.tools-rail{
+  width:170px; flex-shrink:0; border-right:1px solid var(--rule); display:flex; flex-direction:column;
+  justify-content:space-between; padding:0.9rem 0.6rem; transition:width 0.15s ease;
+}
+.tools-rail.is-collapsed{ width:56px; padding:0.9rem 0.5rem; align-items:center; }
+.tools-rail-items{ display:flex; flex-direction:column; gap:0.25rem; width:100%; }
+.tools-rail.is-collapsed .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+.tools-rail.is-collapsed .nav-drawer-label{ display:none; }
+.tools-rail.is-collapsed .nav-drawer-toggle{ align-self:center; }
+.tools-rail.is-collapsed .nav-drawer-toggle-icon{ transform:rotate(180deg); }
+@media (max-width:860px){
+  .tools-rail{ width:56px; padding:0.9rem 0.5rem; align-items:center; }
+  .tools-rail .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+  .tools-rail .nav-drawer-label{ display:none; }
+}
+
 .workspace-main{ flex:1; display:flex; min-height:0; }
 @media (max-width:860px){
   .workspace-main{ flex-direction:column; overflow-y:auto; }
 }
 
 .workspace-error{ margin:1.2rem 1.5rem 0; }
+
+/* Exercises Builder: lesson picker + exercise list (left/main) and a
+   live mind map (right) -- a sibling of .tools-rail inside .workspace-main. */
+.exercises-builder{ flex:1; display:flex; min-height:0; }
+.exercises-builder-main{ flex:1; min-width:0; padding:1.6rem 1.5rem; overflow-y:auto; }
+.exercises-builder-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+.exercises-builder-head h2{ font-size:1.3rem; margin-bottom:0.3rem; }
+.exercises-lesson-picker{ margin-bottom:1.3rem; max-width:320px; }
+
+.exercises-list{ display:flex; flex-direction:column; gap:0.7rem; }
+.exercise-card{ border:1px solid var(--rule); border-radius:12px; padding:0.8rem 0.9rem; background:var(--paper-raised); }
+.exercise-kind{ margin-bottom:0.5rem; display:inline-block; }
+.exercise-kind-multiple_choice{ background:var(--accent-soft); color:var(--accent-soft-ink); }
+.exercise-kind-true_false{ background:var(--warning-soft); color:var(--warning-soft-ink); }
+.exercise-kind-flashcard{ background:var(--success-soft); color:var(--success-soft-ink); }
+
+@media (max-width:860px){
+  .exercises-builder{ flex-direction:column; overflow-y:auto; }
+}
+
+/* A small, purpose-built visualization -- not React Flow (that's
+   knowledge-graph/'s unrelated setup). One node per exercise around a
+   center "lesson" node, color-coded to match .exercise-kind-* above. */
+.mind-map{ width:260px; flex-shrink:0; border-left:1px solid var(--rule); padding:1.2rem 1rem; overflow-y:auto; }
+.mind-map-title{ font-size:1rem; margin-bottom:0.8rem; }
+.mind-map-canvas{ width:100%; height:auto; }
+.mind-map-edge{ stroke:var(--rule); stroke-width:0.6; }
+.mind-map-center{ fill:var(--paper-sunken); stroke:var(--rule); stroke-width:0.6; }
+.mind-map-center-label{ font-size:3px; fill:var(--ink-soft); font-weight:700; }
+.mind-map-node circle{ stroke:var(--paper); stroke-width:0.6; }
+.mind-map-node text{ font-size:2.6px; fill:var(--paper); font-weight:700; }
+.mind-map-node-multiple_choice circle{ fill:var(--accent); }
+.mind-map-node-true_false circle{ fill:var(--warning); }
+.mind-map-node-flashcard circle{ fill:var(--success); }
 
 .error-banner{ background:var(--destructive-soft); color:var(--destructive-soft-ink); border-radius:8px; padding:0.6rem 0.9rem; font-size:0.85rem; margin-bottom:1rem; }
 
@@ -218,6 +272,9 @@ a{ color:inherit; text-decoration:none; }
 .hitl-field-sub{ margin:0 0 0.6rem; color:var(--ink-soft); font-size:0.82rem; }
 .hitl-week{ margin-bottom:0.6rem; }
 .hitl-lesson-list{ margin:0; padding-left:1.1rem; color:var(--ink-soft); font-size:0.85rem; }
+.hitl-exercise-list{ display:flex; flex-direction:column; gap:0.6rem; }
+.hitl-exercise{ border:1px solid var(--rule); border-radius:8px; padding:0.5rem 0.7rem; }
+.hitl-exercise-kind{ margin-bottom:0.35rem; display:inline-block; }
 .hitl-card-actions{ display:flex; gap:0.5rem; margin-top:0.7rem; }
 .hitl-card-actions .btn{ display:inline-flex; align-items:center; gap:0.35rem; padding:0.4rem 0.7rem; font-size:0.8rem; }
 .hitl-card-actions .btn svg{ width:13px; height:13px; }

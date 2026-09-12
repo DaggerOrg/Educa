@@ -9,12 +9,29 @@ export interface Slide {
   bullets: string[];
 }
 
+export type ExerciseKind = "multiple_choice" | "true_false" | "flashcard";
+
+// The Exercises Builder feature -- practice exercises, separate from the
+// one graded `Quiz` question above (see backend/app/models_db.py's
+// `LessonExercise` docstring for why it's not just another quiz item).
+// `options`/`correctAnswer` are set for multiple_choice/true_false;
+// `back` is set for flashcard -- exactly one pair per exercise.
+export interface Exercise {
+  id: string;
+  kind: ExerciseKind;
+  prompt: string;
+  options: string[] | null;
+  correctAnswer: number | null;
+  back: string | null;
+}
+
 export interface LessonContent {
   slides: Slide[];
   speakerNotes: string;
   // Slides/notes come from lesson_content_agent, the quiz from a separate
   // quiz_agent tool call -- a lesson can have one without the other yet.
   quiz: Quiz | null;
+  exercises: Exercise[];
 }
 
 export interface Lesson {
@@ -152,6 +169,17 @@ export interface ListingWeekPreview {
 
 export interface ListingDetail extends Listing {
   weeks: ListingWeekPreview[];
+}
+
+// A saved collaborative knowledge-graph board (see backend/app/kg_boards.py)
+// -- metadata only. The graph itself (nodes/edges) lives in Liveblocks
+// Storage, in a room named `kg-board:{id}`, not in this shape.
+export interface KgBoard {
+  id: string;
+  title: string;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
 }
 
 export interface Purchase {

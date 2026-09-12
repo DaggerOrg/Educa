@@ -47,6 +47,19 @@ interface LessonQuizArgs extends Record<string, unknown> {
   quiz?: QuizDraft;
 }
 
+interface ExerciseDraft {
+  kind?: "multiple_choice" | "true_false" | "flashcard";
+  prompt?: string;
+  options?: string[];
+  correct_answer?: number;
+  back?: string;
+}
+
+interface LessonExercisesArgs extends Record<string, unknown> {
+  lesson_id?: string;
+  exercises?: ExerciseDraft[];
+}
+
 function parseResult(result: string): { accepted?: boolean } | null {
   try {
     const parsed = JSON.parse(result);
@@ -150,6 +163,39 @@ function LessonQuizPreview({ args, lessonTitle }: { args: LessonQuizArgs; lesson
   );
 }
 
+const EXERCISE_KIND_LABEL: Record<string, string> = {
+  multiple_choice: "Multiple choice",
+  true_false: "True / False",
+  flashcard: "Flashcard",
+};
+
+function LessonExercisesPreview({ args, lessonTitle }: { args: LessonExercisesArgs; lessonTitle: string | null }) {
+  return (
+    <>
+      {lessonTitle && <p className="hitl-field"><strong>{lessonTitle}</strong></p>}
+      <div className="hitl-exercise-list">
+        {(args.exercises ?? []).map((ex, i) => (
+          <div className="hitl-exercise" key={i}>
+            <span className={`status-pill hitl-exercise-kind exercise-kind-${ex.kind ?? "multiple_choice"}`}>
+              {EXERCISE_KIND_LABEL[ex.kind ?? "multiple_choice"]}
+            </span>
+            <p className="quiz-question">{ex.prompt}</p>
+            {ex.kind === "flashcard" ? (
+              <p className="hitl-field-sub">{ex.back}</p>
+            ) : (
+              <ul className="quiz-options">
+                {(ex.options ?? []).map((opt, oi) => (
+                  <li key={oi} className={oi === ex.correct_answer ? "is-correct" : ""}>{opt}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export function useCurriculumApprovals(course: Course | null) {
   useHumanInTheLoop<SyllabusArgs>(
     {
@@ -193,6 +239,18 @@ export function useCurriculumApprovals(course: Course | null) {
       render: (props) => (
         <ApprovalCard label="Lesson quiz" status={props.status} result={props.result} respond={props.respond}>
           <LessonQuizPreview args={props.args} lessonTitle={course ? findLesson(course, props.args.lesson_id)?.title ?? null : null} />
+        </ApprovalCard>
+      ),
+    },
+    [course],
+  );
+
+  useHumanInTheLoop<LessonExercisesArgs>(
+    {
+      name: "generate_lesson_exercises",
+      render: (props) => (
+        <ApprovalCard label="Lesson exercises" status={props.status} result={props.result} respond={props.respond}>
+          <LessonExercisesPreview args={props.args} lessonTitle={course ? findLesson(course, props.args.lesson_id)?.title ?? null : null} />
         </ApprovalCard>
       ),
     },

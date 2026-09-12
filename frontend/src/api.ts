@@ -4,6 +4,7 @@ import type {
   Course,
   CoursePreview,
   Enrollment,
+  KgBoard,
   Lesson,
   Listing,
   ListingDetail,
@@ -128,3 +129,18 @@ export const buyListing = (listingId: string) =>
 export const listMyListings = () => request<Listing[]>("/marketplace/mine/listings");
 
 export const listMyPurchases = () => request<Purchase[]>("/marketplace/mine/purchases");
+
+// ---- Collaborative knowledge-graph boards --------------------------------
+// Board metadata only -- the graph itself lives in Liveblocks Storage (see
+// knowledge-graph/live/LiveKnowledgeGraphCanvas.tsx).
+
+export const listKgBoards = () => request<KgBoard[]>("/kg-boards");
+
+export const createKgBoard = (title: string) =>
+  request<KgBoard>("/kg-boards", { method: "POST", body: JSON.stringify({ title }) });
+
+export const renameKgBoard = (boardId: string, title: string) =>
+  request<KgBoard>(`/kg-boards/${boardId}`, { method: "PATCH", body: JSON.stringify({ title }) });
+
+export const deleteKgBoard = (boardId: string) =>
+  request<null>(`/kg-boards/${boardId}`, { method: "DELETE" });

@@ -186,6 +186,27 @@ class Response(Base):
     attempt: Mapped["QuizAttempt"] = relationship(back_populates="responses")
 
 
+class KnowledgeGraphBoard(Base):
+    """A saved collaborative knowledge-graph board -- metadata only (title,
+    who/when). The graph itself (nodes/edges) is never stored here: it lives
+    entirely in Liveblocks Storage, in a room whose id is this row's `id`
+    (see frontend/src/knowledge-graph/live/LiveKnowledgeGraphCanvas.tsx and
+    backend/app/liveblocks_auth.py's `kg-board:*` wildcard grant). This table
+    only exists so the "history" sidebar can list/rename/delete boards
+    without calling Liveblocks' REST API to enumerate rooms.
+
+    Shared across every teacher account, like the lecturers' chat -- any
+    teacher can see, open, and co-edit any board (no per-board ownership/
+    permission model yet)."""
+
+    __tablename__ = "knowledge_graph_boards"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: _id("kgboard"))
+    title: Mapped[str]
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
 class Listing(Base):
     """A teacher's course, offered for sale to *other* teachers (not
     students -- this is the curriculum marketplace, separate from

@@ -29,13 +29,24 @@ def _current_quiz_item(lesson: Lesson) -> QuizItem | None:
 def _serialize_lesson(lesson: Lesson) -> dict:
     item = _current_quiz_item(lesson)
     content = None
-    if lesson.slides is not None or item is not None:
+    if lesson.slides is not None or item is not None or lesson.exercises:
         content = {
             "slides": lesson.slides or [],
             "speakerNotes": lesson.speaker_notes or "",
             "quiz": {"question": item.prompt, "options": item.options, "correctIndex": item.correct_answer}
             if item
             else None,
+            "exercises": [
+                {
+                    "id": ex.id,
+                    "kind": ex.kind,
+                    "prompt": ex.prompt,
+                    "options": ex.options,
+                    "correctAnswer": ex.correct_answer,
+                    "back": ex.back,
+                }
+                for ex in lesson.exercises
+            ],
         }
     return {
         "id": lesson.id,
@@ -222,6 +233,31 @@ def set_lesson_quiz(lesson_id: str, teacher_id: str, question: str, options: lis
         quiz = Quiz(lesson_id=lesson.id, version=next_version)
         quiz.items.append(QuizItem(kind="multiple_choice", prompt=question, options=options, correct_answer=correct_index))
         session.add(quiz)
+        session.commit()
+        return _serialize_lesson(_find_lesson_row(session, lesson_id))
+
+
+def add_lesson_exercises(lesson_id: str, teacher_id: str, exercises: list[dict]) -> dict | None:
+    """Appends new `LessonExercise` rows for the Exercises Builder feature.
+
+    Unlike `set_lesson_quiz`'s `Quiz`, these aren't versioned -- exercises
+    accumulate across calls rather than replacing a prior set. See
+    `LessonExercise`'s docstring in models_db.py for why this is a
+    separate table instead of another `QuizItem`."""
+    with SessionLocal() as session:
+        lesson = _find_lesson_row(session, lesson_id)
+        if not lesson:
+            return None
+        _check_owner(lesson.module.course, teacher_id)
+        for ex in exercises:
+            session.add(LessonExercise(
+                lesson_id=lesson.id,
+                kind=ex["kind"],
+                prompt=ex["prompt"],
+                options=ex.get("options"),
+                correct_answer=ex.get("correct_answer"),
+                back=ex.get("back"),
+            ))
         session.commit()
         return _serialize_lesson(_find_lesson_row(session, lesson_id))
 

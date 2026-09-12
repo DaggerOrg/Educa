@@ -19,6 +19,8 @@ import AccountMenu from "./components/AccountMenu.tsx";
 import AccountModal, { type AccountModalKind } from "./components/AccountModal.tsx";
 import { useCurriculumApprovals } from "./components/ApprovalCards.tsx";
 import Auth from "./components/Auth.tsx";
+import CourseToolsRail, { type CourseTool } from "./components/CourseToolsRail.tsx";
+import ExercisesBuilder from "./components/ExercisesBuilder.tsx";
 import RoutinePanel from "./components/RoutinePanel.tsx";
 import SettingsPanel from "./components/SettingsPanel.tsx";
 import ThemeToggle from "./components/ThemeToggle.tsx";
@@ -34,7 +36,7 @@ import {
   IconStore,
   IconTag,
 } from "./components/icons.tsx";
-import KnowledgeGraphPage from "./knowledge-graph/KnowledgeGraphPage.tsx";
+import KnowledgeGraphSection from "./knowledge-graph/KnowledgeGraphSection.tsx";
 import Home from "./components/Home.tsx";
 import LessonPanel from "./components/LessonPanel.tsx";
 import ListingForm from "./components/ListingForm.tsx";
@@ -120,6 +122,7 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const [section, setSection] = useState<"courses" | "course" | "marketplace" | "knowledge-graph" | "chat" | "settings">("course");
   const [navExpanded, setNavExpanded] = useState(true);
+  const [courseTool, setCourseTool] = useState<CourseTool>("syllabus");
   const [materialsModalOpen, setMaterialsModalOpen] = useState(false);
   const [accountModal, setAccountModal] = useState<AccountModalKind | null>(null);
   const [myListings, setMyListings] = useState<Listing[]>([]);
@@ -248,6 +251,7 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
     setCourseId(boughtCourse.id);
     setSelectedLessonId(null);
     setEditedIds(new Set());
+    setCourseTool("syllabus");
     setSection("course");
     refreshCourseList();
   }
@@ -335,10 +339,11 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
               aria-current={section === "course" ? "page" : undefined}
               onClick={() => {
                 // Always land back on the module list, not whatever lesson
-                // page was last open -- matches Home/Marketplace/course-
-                // switcher, which all reset selectedLessonId when entering
-                // a course.
+                // page (or tool) was last open -- matches Home/Marketplace/
+                // course-switcher, which all reset selectedLessonId when
+                // entering a course.
                 setSelectedLessonId(null);
+                setCourseTool("syllabus");
                 setSection("course");
               }}
             >
@@ -409,7 +414,7 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
           {section === "settings" ? (
             <SettingsPanel session={session} />
           ) : section === "knowledge-graph" ? (
-            <KnowledgeGraphPage />
+            <KnowledgeGraphSection session={session} />
           ) : section === "chat" ? (
             <TeacherChat session={session} courses={myCourses} />
           ) : section === "courses" ? (
@@ -420,6 +425,7 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
                 setCourseId(id);
                 setSelectedLessonId(null);
                 setEditedIds(new Set());
+                setCourseTool("syllabus");
                 setSection("course");
               }}
               onNewCourse={() => {
@@ -427,6 +433,7 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
                 setCourse(null);
                 setSelectedLessonId(null);
                 setEditedIds(new Set());
+                setCourseTool("syllabus");
                 setSection("course");
                 setChatOpen(true);
               }}
@@ -455,18 +462,25 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             />
           ) : !course ? (
             <WelcomePanel onOpenChat={() => setChatOpen(true)} />
-          ) : selectedLessonId ? (
-            <LessonPanel
-              lesson={selectedLesson}
-              week={selectedWeek}
-              onBack={() => setSelectedLessonId(null)}
-              onEdited={markEdited}
-              onApprove={handleApprove}
-              onPublish={handlePublish}
-              onAddMaterial={() => setMaterialsModalOpen(true)}
-            />
           ) : (
-            <SyllabusView course={course} onSelect={setSelectedLessonId} />
+            <>
+              <CourseToolsRail active={courseTool} onSelect={setCourseTool} />
+              {courseTool === "exercises" ? (
+                <ExercisesBuilder course={course} selectedLessonId={selectedLessonId} onSelectLesson={setSelectedLessonId} />
+              ) : selectedLessonId ? (
+                <LessonPanel
+                  lesson={selectedLesson}
+                  week={selectedWeek}
+                  onBack={() => setSelectedLessonId(null)}
+                  onEdited={markEdited}
+                  onApprove={handleApprove}
+                  onPublish={handlePublish}
+                  onAddMaterial={() => setMaterialsModalOpen(true)}
+                />
+              ) : (
+                <SyllabusView course={course} onSelect={setSelectedLessonId} />
+              )}
+            </>
           )}
         </div>
       </div>

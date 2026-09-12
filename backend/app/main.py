@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, Query, Upl
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel, Field  # noqa: E402
 
-from . import knowledge, liveblocks_auth, marketplace, store  # noqa: E402
+from . import kg_boards, knowledge, liveblocks_auth, marketplace, store  # noqa: E402
 from .agents.team import build_team  # noqa: E402
 from .auth.context import require_role, set_current_user  # noqa: E402
 from .auth.routes import router as auth_router  # noqa: E402
@@ -224,14 +224,55 @@ def my_purchases(user: dict = Depends(require_role("teacher"))):
     return marketplace.list_my_purchases(user["id"])
 
 
-# ---- Lecturers' chat -------------------------------------------------------
-# The chat itself lives entirely in Liveblocks (Feeds) -- this backend only
-# mints the auth token; see liveblocks_auth.py's module docstring.
+# ---- Liveblocks-backed features --------------------------------------------
+# The lecturers' chat and the collaborative knowledge-graph boards both live
+# in Liveblocks (Feeds / Storage respectively) -- this backend only mints the
+# shared auth token; see liveblocks_auth.py's module docstring.
 
 
 @teacher.post("/liveblocks-auth")
 def liveblocks_auth_route(user: dict = Depends(require_role("teacher"))):
     return liveblocks_auth.authorize(user)
+
+
+# ---- Collaborative knowledge-graph boards ----------------------------------
+# Board metadata only (title/creator/timestamp) -- the graph content lives
+# entirely in Liveblocks Storage; see kg_boards.py's module docstring.
+
+
+class KgBoardCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+
+
+class KgBoardRename(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+
+
+@teacher.get("/kg-boards")
+def list_kg_boards(_: dict = Depends(require_role("teacher"))):
+    return kg_boards.list_boards()
+
+
+@teacher.post("/kg-boards", status_code=201)
+def create_kg_board(body: KgBoardCreate, user: dict = Depends(require_role("teacher"))):
+    return kg_boards.create_board(user["id"], body.title)
+
+
+@teacher.patch("/kg-boards/{board_id}")
+def rename_kg_board(board_id: str, body: KgBoardRename, _: dict = Depends(require_role("teacher"))):
+    try:
+        board = kg_boards.rename_board(board_id, body.title)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    if not board:
+        raise HTTPException(404, "Board not found")
+    return board
+
+
+@teacher.delete("/kg-boards/{board_id}", status_code=204)
+def delete_kg_board(board_id: str, _: dict = Depends(require_role("teacher"))):
+    if not kg_boards.delete_board(board_id):
+        raise HTTPException(404, "Board not found")
 
 
 app.include_router(teacher)

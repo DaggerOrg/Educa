@@ -18,8 +18,8 @@
   --success: #39C684; --success-ink: #052316; --success-soft: rgba(57,198,132,0.14); --success-soft-ink: #7BE0B2;
   --warning: #F4A825; --warning-ink: #2B1A00; --warning-soft: rgba(244,168,37,0.14); --warning-soft-ink: #F8C170;
   --destructive: #D34545; --destructive-ink: #FFFFFF; --destructive-soft: rgba(211,69,69,0.16); --destructive-soft-ink: #F0A0A0;
-  --violet: #8B66CC; --violet-ink: #FFFFFF;
-  --orange: #F09942; --orange-ink: #2B1300;
+  --violet: #8B66CC; --violet-ink: #FFFFFF; --violet-glow: rgba(139,102,204,0.6);
+  --orange: #F09942; --orange-ink: #2B1300; --orange-soft: rgba(240,153,66,0.16); --orange-soft-ink: #F8C48F;
   --done: var(--success); --done-ink: var(--success-ink);
   --shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 12px 32px rgba(0,0,0,0.5);
 }
@@ -30,8 +30,8 @@
   --success: #29A36A; --success-ink: #FFFFFF; --success-soft: rgba(41,163,106,0.12); --success-soft-ink: #1D7A4F;
   --warning: #F59F0A; --warning-ink: #1A1A1A; --warning-soft: rgba(245,159,10,0.14); --warning-soft-ink: #8A5A06;
   --destructive: #DC2828; --destructive-ink: #FFFFFF; --destructive-soft: rgba(220,40,40,0.10); --destructive-soft-ink: #B01E1E;
-  --violet: #673AB6; --violet-ink: #FFFFFF;
-  --orange: #E66B19; --orange-ink: #FFFFFF;
+  --violet: #673AB6; --violet-ink: #FFFFFF; --violet-glow: rgba(103,58,182,0.55);
+  --orange: #E66B19; --orange-ink: #FFFFFF; --orange-soft: rgba(230,107,25,0.12); --orange-soft-ink: #9C4A10;
   --shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.10);
 }
 *{ box-sizing:border-box; }
@@ -48,11 +48,11 @@ a{ color:inherit; text-decoration:none; }
 .text-link{ color:var(--accent); text-decoration:underline; }
 
 .layout{ display:flex; flex-direction:column; height:100%; position:relative; }
-.topbar{ padding:0.8rem 1.5rem; border-bottom:1px solid var(--rule); background:var(--paper); display:flex; align-items:center; justify-content:space-between; }
+.topbar{ padding:0.8rem 1.5rem; border-bottom:1px solid var(--rule); background:var(--paper); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; row-gap:0.6rem; }
 .wordmark{ font-family:'Inter',sans-serif; font-weight:800; font-size:1.05rem; letter-spacing:-0.01em; }
 .wordmark span{ color:var(--accent); }
 
-.topbar-right{ display:flex; align-items:center; gap:0.9rem; min-width:0; overflow-x:auto; }
+.topbar-right{ display:flex; align-items:center; gap:0.9rem; min-width:0; flex-wrap:wrap; justify-content:flex-end; }
 .course-switcher{ flex-shrink:0; }
 .topbar-account{ flex-shrink:0; }
 .topbar-email{ white-space:nowrap; }
@@ -88,12 +88,28 @@ a{ color:inherit; text-decoration:none; }
 .nav-drawer-btn{
   width:100%; height:38px; border-radius:8px; border:1px solid transparent; background:transparent;
   color:var(--ink-soft); display:flex; align-items:center; gap:0.6rem; padding:0 0.6rem; cursor:pointer;
-  font-weight:600; font-size:0.82rem; text-align:left;
+  font-weight:600; font-size:0.82rem; text-align:left; position:relative;
 }
 .nav-drawer-btn svg{ width:18px; height:18px; flex-shrink:0; }
 .nav-drawer-btn.is-active{ background:var(--paper-raised); border-color:var(--rule); color:var(--accent); box-shadow:var(--shadow); }
 .nav-drawer.is-collapsed .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
 .nav-drawer.is-collapsed .nav-drawer-label{ display:none; }
+
+/* Short hint on hover/focus -- only relevant once the label is hidden
+   (icon-only: collapsed on desktop, or the mobile horizontal bars below),
+   since it'd just duplicate the visible label otherwise. Positioned to
+   the right by default (both vertical rails); mobile media queries
+   override to below. */
+.nav-drawer-btn[data-tooltip]::after{
+  content:attr(data-tooltip);
+  position:absolute; left:100%; top:50%; transform:translateY(-50%); margin-left:0.5rem;
+  background:var(--ink); color:var(--paper);
+  font-family:'Inter',sans-serif; font-weight:600; font-size:0.72rem; white-space:nowrap;
+  padding:0.35rem 0.6rem; border-radius:6px; box-shadow:var(--shadow);
+  opacity:0; pointer-events:none; transition:opacity 0.12s ease; z-index:40;
+}
+.nav-drawer.is-collapsed .nav-drawer-btn[data-tooltip]:hover::after,
+.nav-drawer.is-collapsed .nav-drawer-btn[data-tooltip]:focus-visible::after{ opacity:1; }
 
 .nav-drawer-toggle{
   align-self:flex-end; width:28px; height:28px; border-radius:8px; border:1px solid var(--rule);
@@ -103,11 +119,30 @@ a{ color:inherit; text-decoration:none; }
 .nav-drawer.is-collapsed .nav-drawer-toggle{ align-self:center; }
 .nav-drawer.is-collapsed .nav-drawer-toggle-icon{ transform:rotate(180deg); }
 
+/* Below 640px the vertical rail would eat too much of an already-narrow
+   screen, so it lies down into a horizontal icon bar under the topbar
+   instead (.workspace switches to a column, putting .nav-drawer first).
+   No overflow-x:auto here even though the row could theoretically
+   overflow on a very narrow screen -- per the CSS overflow spec, pairing
+   it with the unset (visible) overflow-y would force that to 'auto' too,
+   clipping the tooltip that's positioned below each icon. */
 @media (max-width:640px){
-  .nav-drawer{ width:56px; padding:0.9rem 0.5rem; align-items:center; }
-  .nav-drawer .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+  .workspace{ flex-direction:column; }
+  .nav-drawer, .nav-drawer.is-collapsed{
+    width:100%; flex-direction:row; align-items:center; padding:0.5rem 0.9rem;
+    border-right:none; border-bottom:1px solid var(--rule);
+  }
+  .nav-drawer-scroll{ flex-direction:row; width:auto; flex:none; }
+  .nav-drawer-items, .nav-drawer-bottom{ flex-direction:row; width:auto; }
+  .nav-drawer-bottom{ margin-left:auto; padding:0 0 0 0.6rem; border-top:none; border-left:1px solid var(--rule); }
+  .nav-drawer .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; flex-shrink:0; }
   .nav-drawer .nav-drawer-label{ display:none; }
   .nav-drawer .nav-drawer-toggle{ display:none; }
+  .nav-drawer .nav-drawer-btn[data-tooltip]::after{
+    left:50%; top:100%; transform:translateX(-50%); margin-left:0; margin-top:0.5rem;
+  }
+  .nav-drawer .nav-drawer-btn[data-tooltip]:hover::after,
+  .nav-drawer .nav-drawer-btn[data-tooltip]:focus-visible::after{ opacity:1; }
 }
 
 /* Course builder's second-level tool rail -- same look as .nav-drawer's
@@ -124,10 +159,28 @@ a{ color:inherit; text-decoration:none; }
 .tools-rail.is-collapsed .nav-drawer-label{ display:none; }
 .tools-rail.is-collapsed .nav-drawer-toggle{ align-self:center; }
 .tools-rail.is-collapsed .nav-drawer-toggle-icon{ transform:rotate(180deg); }
+.tools-rail.is-collapsed .nav-drawer-btn[data-tooltip]:hover::after,
+.tools-rail.is-collapsed .nav-drawer-btn[data-tooltip]:focus-visible::after{ opacity:1; }
+/* Same reasoning as .nav-drawer above: below 860px (where .workspace-main
+   already switches to a column) a narrow vertical rail would just float
+   above the content with dead space beside it, so it lies down into a
+   horizontal bar spanning the full width instead. No overflow-x:auto here
+   either, for the same reason as .nav-drawer's mobile block -- it would
+   force overflow-y to 'auto' too and clip the below-positioned tooltip. */
 @media (max-width:860px){
-  .tools-rail{ width:56px; padding:0.9rem 0.5rem; align-items:center; }
-  .tools-rail .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; }
+  .tools-rail, .tools-rail.is-collapsed{
+    width:100%; flex-direction:row; align-items:center; justify-content:flex-start; padding:0.5rem 0.9rem;
+    border-right:none; border-bottom:1px solid var(--rule);
+  }
+  .tools-rail-items{ flex-direction:row; width:auto; }
+  .tools-rail .nav-drawer-btn{ width:36px; height:36px; padding:0; justify-content:center; flex-shrink:0; }
   .tools-rail .nav-drawer-label{ display:none; }
+  .tools-rail .nav-drawer-toggle{ display:none; }
+  .tools-rail .nav-drawer-btn[data-tooltip]::after{
+    left:50%; top:100%; transform:translateX(-50%); margin-left:0; margin-top:0.5rem;
+  }
+  .tools-rail .nav-drawer-btn[data-tooltip]:hover::after,
+  .tools-rail .nav-drawer-btn[data-tooltip]:focus-visible::after{ opacity:1; }
 }
 
 .workspace-main{ flex:1; display:flex; min-height:0; }
@@ -316,11 +369,118 @@ a{ color:inherit; text-decoration:none; }
   display:flex; align-items:center; justify-content:space-between; padding:0.8rem 1.1rem;
   border-bottom:1px solid var(--rule); font-family:'Inter',sans-serif; font-weight:800; font-size:0.95rem;
 }
+.chat-drawer-head-actions{ display:flex; align-items:center; gap:0.3rem; }
+.chat-drawer-icon-btn{
+  border:none; background:transparent; color:var(--ink-soft); cursor:pointer; padding:0.35rem;
+  display:flex; border-radius:6px;
+}
+.chat-drawer-icon-btn svg{ width:16px; height:16px; }
+.chat-drawer-icon-btn:hover{ background:var(--paper-sunken); color:var(--ink); }
+.chat-drawer-icon-btn.is-active{ background:var(--accent-soft); color:var(--accent-soft-ink); }
 .chat-drawer-close{ border:none; background:transparent; color:var(--ink-soft); cursor:pointer; padding:0.2rem; display:flex; }
 .chat-drawer-close svg{ width:16px; height:16px; }
 .chat-drawer > :last-child{ flex:1; min-height:0; }
 
 @media (max-width:640px){ .chat-drawer{ width:100vw; max-width:100vw; } }
+
+/* Agent wheel -- an ambient, always-on-screen status widget (bottom-right)
+   listing the curriculum_team specialists relevant to whatever the teacher
+   is currently doing (see AgentWheel.tsx's per-section/tool filtering).
+   Icons ride a continuously-rotating ring (Ferris-wheel technique: each
+   icon counter-rotates at the same rate the ring spins, canceling the ring's
+   rotation so the glyph itself always reads upright) that speeds up while
+   `.is-active` (an in-flight run on the shared agent). Hidden entirely
+   whenever another overlay owns the corner -- see the render-site guard in
+   App.tsx -- so it never floats over a dialog the teacher is using. */
+.agent-wheel{
+  position:fixed; bottom:20px; right:20px; width:120px; height:120px; z-index:15;
+  pointer-events:none; --wheel-duration:16s;
+}
+.agent-wheel.is-active{ --wheel-duration:6s; }
+.agent-wheel-ring{ position:absolute; inset:0; animation:agent-wheel-spin var(--wheel-duration) linear infinite; }
+.agent-wheel-hub{
+  position:absolute; top:50%; left:50%; width:30px; height:30px; margin:-15px 0 0 -15px;
+  border-radius:50%; background:var(--paper-raised); border:1px solid var(--rule); box-shadow:var(--shadow);
+  display:flex; align-items:center; justify-content:center; color:var(--accent); cursor:pointer; pointer-events:auto;
+}
+.agent-wheel-hub svg{ width:14px; height:14px; }
+.agent-wheel-icon{
+  position:absolute; width:34px; height:34px; border-radius:50%; border:1px solid var(--rule);
+  background:var(--paper-raised); color:var(--ink-soft); display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:0.6rem; font-weight:700; letter-spacing:0.02em;
+  cursor:pointer; pointer-events:auto; box-shadow:var(--shadow);
+  animation:agent-wheel-spin var(--wheel-duration) linear infinite reverse;
+}
+.agent-wheel-icon::after{
+  content:""; position:absolute; bottom:-1px; right:-1px; width:9px; height:9px; border-radius:50%;
+  background:var(--success); border:2px solid var(--paper); transition:background 0.2s ease;
+}
+
+/* Identity color per agent (which agent this is) -- reuses the app's
+   existing categorical hue tokens, built for exactly this ("per-feature
+   colored icon badges", see the palette comment at the top of this file).
+   Kept as a soft tint so it reads as an accent, not a solid badge -- the
+   run-status dot/glow below layers violet on top regardless of hue. */
+.agent-wheel-icon--accent{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-soft-ink); }
+.agent-wheel-icon--success{ border-color:var(--success); background:var(--success-soft); color:var(--success-soft-ink); }
+.agent-wheel-icon--warning{ border-color:var(--warning); background:var(--warning-soft); color:var(--warning-soft-ink); }
+.agent-wheel-icon--destructive{ border-color:var(--destructive); background:var(--destructive-soft); color:var(--destructive-soft-ink); }
+.agent-wheel-icon--orange{ border-color:var(--orange); background:var(--orange-soft); color:var(--orange-soft-ink); }
+
+/* Run status (is this agent's context actually working right now) -- always
+   violet, regardless of the identity hue above, so "active" never blends
+   into an agent's own idle color. Wins on specificity (two classes) over
+   the single-class hue rules. */
+.agent-wheel-icon.is-running{ border-color:var(--violet); color:var(--ink); }
+.agent-wheel-icon.is-running::after{ background:var(--violet); box-shadow:0 0 6px 1px var(--violet); }
+.agent-wheel-icon.is-running{
+  animation: agent-wheel-spin var(--wheel-duration) linear infinite reverse, agent-wheel-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes agent-wheel-spin{ to{ transform:rotate(360deg); } }
+@keyframes agent-wheel-glow{
+  0%,100%{ box-shadow:var(--shadow), 0 0 0 0 transparent; }
+  50%{ box-shadow:var(--shadow), 0 0 14px 4px var(--violet-glow); }
+}
+
+/* Ask AI: past-conversations list + read-only transcript, toggled via the
+   clock icon in .chat-drawer-head-actions (see App.tsx). */
+.chat-history{ overflow-y:auto; padding:0.6rem; display:flex; flex-direction:column; }
+.chat-history-empty{ padding:1rem 0.6rem; }
+.chat-history-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.2rem; }
+.chat-history-item{
+  width:100%; text-align:left; border:none; background:transparent; border-radius:8px;
+  padding:0.6rem 0.7rem; cursor:pointer; display:flex; flex-direction:column; gap:0.2rem;
+}
+.chat-history-item:hover{ background:var(--paper-sunken); }
+.chat-history-item-title{ font-size:0.86rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chat-history-item-time{ font-family:'IBM Plex Mono',monospace; font-size:0.68rem; color:var(--ink-faint); }
+.chat-history-back{ align-self:flex-start; margin-bottom:0.6rem; display:inline-flex; align-items:center; gap:0.4rem; }
+.chat-history-back svg{ width:13px; height:13px; }
+.chat-history-transcript{ display:flex; flex-direction:column; gap:0.9rem; flex:1; }
+.chat-history-turn-role{
+  display:block; font-family:'IBM Plex Mono',monospace; font-size:0.62rem; letter-spacing:0.05em;
+  text-transform:uppercase; color:var(--ink-faint); margin-bottom:0.2rem;
+}
+.chat-history-turn p{ margin:0; font-size:0.88rem; line-height:1.5; white-space:pre-wrap; }
+.chat-history-turn-user p{ color:var(--ink); }
+.chat-history-turn-assistant p{ color:var(--ink-soft); }
+.chat-history-resume{ margin-top:1.2rem; width:100%; text-align:center; }
+
+/* AI Teaching Assistant chat -- plain fetch-based, not <CopilotChat>, so
+   it needs its own message-list styling (the .chat-drawer shell above was
+   only ever host to CopilotChat before, which supplies its own). */
+.ta-chat-body{ flex:1; min-height:0; overflow-y:auto; padding:1rem 1.1rem; display:flex; flex-direction:column; gap:0.6rem; }
+.ta-chat-empty{ margin:auto; text-align:center; }
+.ta-chat-bubble{ max-width:85%; padding:0.55rem 0.8rem; border-radius:12px; font-size:0.88rem; line-height:1.45; white-space:pre-wrap; }
+.ta-chat-bubble-user{ align-self:flex-end; background:var(--accent); color:var(--accent-ink); border-bottom-right-radius:4px; }
+.ta-chat-bubble-assistant{ align-self:flex-start; background:var(--paper-sunken); color:var(--ink); border-bottom-left-radius:4px; }
+.ta-chat-thinking{ color:var(--ink-faint); font-style:italic; }
+.ta-chat-input-row{ display:flex; gap:0.5rem; padding:0.8rem 1.1rem; border-top:1px solid var(--rule); }
+.ta-chat-input-row .auth-input{ flex:1; }
+
+.persona-form .check-row.persona-consent{ margin-top:0.9rem; align-items:flex-start; }
+.persona-playback-card{ align-items:flex-start; margin-bottom:1.2rem; max-width:320px; }
 
 /* Routine -- where a teacher brings in source material (upload or paste).
    Folded into Home (.home-materials-section) and reachable inline from a
@@ -384,7 +544,7 @@ a{ color:inherit; text-decoration:none; }
 
 /* Studio: "My Courses" grid + Marketplace -- both reuse .course-card-grid/
    .course-card above; these extend that pattern rather than replace it. */
-.courses-list, .marketplace, .home-hub{ padding:1.2rem 1.5rem; max-width:920px; }
+.courses-list, .marketplace, .home-hub, .creative-studio{ padding:1.2rem 1.5rem; max-width:920px; }
 .courses-list-head{ display:flex; align-items:center; justify-content:space-between; gap:1rem; }
 .home-hub .courses-list-head{ margin-top:2rem; }
 .courses-list-head h2, .marketplace h2{ font-size:1.3rem; }
@@ -395,7 +555,7 @@ a{ color:inherit; text-decoration:none; }
    straight to the curriculum_team agent, see Home.tsx), starter
    suggestion chips, materials folded in below, then existing work. */
 .home-prompt-section{ text-align:center; padding:2rem 0 1.5rem; }
-.home-prompt-section h2{ font-size:1.6rem; margin-bottom:1.1rem; }
+.home-prompt-section h2{ font-size:1.6rem; margin-bottom:1rem; }
 .home-prompt-form{ display:flex; gap:0.6rem; max-width:560px; margin:0 auto; }
 .home-prompt-input{ flex:1; padding:0.7rem 0.9rem; }
 .home-suggestions{ display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem; margin-top:1rem; }
@@ -406,9 +566,29 @@ a{ color:inherit; text-decoration:none; }
 .home-suggestion-chip:hover{ color:var(--ink); border-color:var(--ink-soft); }
 .home-suggestion-chip:disabled{ opacity:0.55; cursor:default; }
 
-.home-materials-section{ margin-top:1.8rem; padding-top:1.6rem; border-top:1px solid var(--rule); }
+.home-materials-section{ margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--rule); }
 .home-materials-section h3{ font-size:1.05rem; margin-bottom:0.2rem; }
 .home-materials-section .routine-panel{ padding:0; max-width:none; }
+
+/* AI Creative: same prompt-section shape as Home, plus a kind/style
+   control row, an upload control (.upload-control, reused from
+   RoutinePanel), and a gallery of real (uploaded) + mock (generated
+   preview) cards below. */
+.creative-studio-tabs{ max-width:280px; margin:0 auto 1.2rem; }
+.creative-controls{ display:flex; justify-content:center; gap:0.6rem; margin-bottom:1rem; }
+.creative-kind-toggle{ display:flex; border:1px solid var(--rule); border-radius:8px; padding:0.2rem; background:var(--paper-sunken); }
+.creative-controls .course-switcher{ max-width:180px; }
+.creative-studio .upload-control{ justify-content:center; margin-top:1rem; }
+
+.creative-gallery{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:0.9rem; margin-top:1.8rem; padding-top:1.6rem; border-top:1px solid var(--rule); }
+.creative-card{ display:flex; flex-direction:column; gap:0.5rem; border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised); padding:0.7rem; }
+.creative-thumb{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; background:var(--paper-sunken); }
+.creative-thumb-loading{ display:block; }
+.creative-thumb-mock{ display:flex; align-items:center; justify-content:center; color:var(--ink-faint); }
+.creative-thumb-mock svg{ width:28px; height:28px; }
+.creative-card-footer{ display:flex; align-items:center; justify-content:space-between; gap:0.5rem; }
+.creative-card-meta{ font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.creative-preview-badge{ background:var(--warning-soft); color:var(--warning-soft-ink); white-space:normal; text-align:left; }
 
 /* Home, mid-conversation: describing a course on Home turns the same main
    stage into a full ChatGPT-style thread (Home.tsx's `chatStarted`) instead
@@ -506,6 +686,65 @@ a{ color:inherit; text-decoration:none; }
 .quiz-result-correct{ color:var(--success); font-weight:600; }
 .quiz-result-wrong{ color:var(--destructive); font-weight:600; }
 .quiz-attempt-history{ margin-top:1rem; }
+
+/* Traditional view "sophisticated features": course-level tabs (Content/
+   Gradebook/Roster), completion progress, and per-lesson Assignment/
+   Discussion activities -- see docs/moodle/mind-map/README.md's gap list
+   and frontend/src/educa/traditionalData.ts for the mock data these read. */
+.course-tabs{ display:flex; gap:0.4rem; margin:0.9rem 0 1.3rem; border-bottom:1px solid var(--rule); }
+.course-tab{
+  display:inline-block; padding:0.5rem 0.2rem; margin-right:1rem; font-size:0.88rem; font-weight:600;
+  color:var(--ink-soft); text-decoration:none; border-bottom:2px solid transparent;
+}
+.course-tab:hover{ color:var(--ink); }
+.course-tab.is-active{ color:var(--ink); border-bottom-color:var(--accent); }
+
+.progress-block{ margin:0.8rem 0 1.1rem; display:flex; flex-direction:column; gap:0.3rem; max-width:320px; }
+.progress-bar{ height:6px; border-radius:999px; background:var(--paper-sunken); overflow:hidden; }
+.progress-bar-fill{ height:100%; background:var(--accent); border-radius:999px; }
+.progress-bar-sm{ margin-top:0.5rem; max-width:160px; }
+
+.lesson-view-head{ display:flex; align-items:center; justify-content:space-between; gap:0.8rem; }
+.completion-toggle svg{ width:13px; height:13px; }
+
+.grade-pill{ font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700; padding:0.1rem 0.45rem; border-radius:6px; }
+.grade-good{ background:var(--success-soft); color:var(--success-soft-ink); }
+.grade-ok{ background:var(--warning-soft); color:var(--warning-soft-ink); }
+.grade-low{ background:var(--destructive-soft); color:var(--destructive-soft-ink); }
+
+.gradebook-scroll, .roster-scroll{ overflow-x:auto; margin-top:0.5rem; }
+.gradebook-table, .roster-table{ border-collapse:collapse; width:100%; font-size:0.85rem; }
+.gradebook-table th, .gradebook-table td, .roster-table th, .roster-table td{
+  border-bottom:1px solid var(--rule); padding:0.55rem 0.7rem; text-align:left; white-space:nowrap;
+}
+.gradebook-table th{ font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; }
+.gradebook-table th span.hint-inline{ margin-top:0.15rem; text-transform:none; letter-spacing:0; font-family:inherit; }
+.gradebook-footnote{ margin-top:0.8rem; }
+
+.roster-table th{ font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; }
+.roster-remove{ padding:0.3rem 0.6rem; font-size:0.78rem; color:var(--destructive-soft-ink); }
+.roster-forms{ display:flex; flex-direction:column; gap:1rem; margin-top:1.5rem; padding-top:1.2rem; border-top:1px solid var(--rule); }
+.roster-form-row{ display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.4rem; }
+.roster-form-row input{ flex:1; min-width:160px; }
+.roster-bulk{ display:flex; flex-direction:column; gap:0.5rem; margin-top:0.6rem; max-width:420px; }
+.roster-bulk textarea{ resize:vertical; font-family:inherit; }
+
+.assignment-block, .forum-block{ margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--rule); }
+.assignment-prompt{ color:var(--ink-soft); font-size:0.88rem; margin:0 0 0.8rem; }
+.assignment-submission-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.7rem; }
+.assignment-submission-row{ border:1px solid var(--rule); border-radius:10px; background:var(--paper-raised); padding:0.7rem 0.9rem; }
+.assignment-submission-row p{ margin:0.3rem 0 0.5rem; font-size:0.88rem; }
+.assignment-submission-head{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; }
+.assignment-grade-row{ display:flex; align-items:center; gap:0.5rem; }
+.assignment-grade-row input{ width:70px; }
+.assignment-composer, .forum-composer{ display:flex; flex-direction:column; gap:0.5rem; max-width:520px; }
+.assignment-composer textarea, .forum-composer textarea{ resize:vertical; font-family:inherit; }
+.assignment-composer button, .forum-composer button{ align-self:flex-start; }
+
+.forum-post-list{ list-style:none; margin:0 0 1rem; padding:0; display:flex; flex-direction:column; gap:0.7rem; }
+.forum-post{ border:1px solid var(--rule); border-radius:10px; background:var(--paper-raised); padding:0.7rem 0.9rem; }
+.forum-post p{ margin:0.35rem 0 0; font-size:0.88rem; }
+.forum-post-head{ display:flex; align-items:center; gap:0.5rem; }
 
 /* Lecturers' chat (TeacherChat.tsx) -- a full-height panel like the
    knowledge graph (.kg-page) rather than a padded/scrollable content block
@@ -655,6 +894,34 @@ button.account-modal-row:hover{ background:var(--paper-sunken); }
 .settings-card-title{ font-size:0.9rem; font-weight:700; display:flex; align-items:center; gap:0.5rem; margin-bottom:0.9rem; }
 .settings-card-title svg{ width:15px; height:15px; color:var(--ink-soft); }
 
+/* Settings -> AI Agents: what each curriculum_team specialist does, and a
+   per-agent on/off switch (agentRegistry.ts is also what drives the wheel
+   widget in App.tsx, so a row here and a wheel icon are the same agent). */
+.agent-list{ display:flex; flex-direction:column; gap:0.9rem; padding:0.4rem 0; }
+.agent-list-row{ display:flex; align-items:center; gap:0.9rem; }
+.agent-settings-badge{
+  flex-shrink:0; width:32px; height:32px; border-radius:50%; border:1px solid var(--rule);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:0.6rem; font-weight:700; letter-spacing:0.02em;
+}
+.agent-list-main{ flex:1; min-width:0; }
+.agent-list-name{ font-weight:700; font-size:0.88rem; }
+.agent-list-description{ margin:0.1rem 0 0; color:var(--ink-soft); font-size:0.82rem; }
+
+.agent-toggle{ position:relative; display:inline-flex; align-items:center; cursor:pointer; flex-shrink:0; }
+.agent-toggle input{ position:absolute; opacity:0; width:1px; height:1px; }
+.agent-toggle-track{
+  width:34px; height:20px; border-radius:999px; background:var(--paper-sunken); border:1px solid var(--rule);
+  display:inline-block; position:relative; transition:background 0.15s ease, border-color 0.15s ease;
+}
+.agent-toggle-thumb{
+  position:absolute; top:1px; left:1px; width:16px; height:16px; border-radius:50%; background:var(--ink-faint);
+  transition:transform 0.15s ease, background 0.15s ease;
+}
+.agent-toggle input:checked + .agent-toggle-track{ background:var(--accent-soft); border-color:var(--accent); }
+.agent-toggle input:checked + .agent-toggle-track .agent-toggle-thumb{ transform:translateX(14px); background:var(--accent); }
+.agent-toggle input:focus-visible + .agent-toggle-track{ outline:1px solid var(--accent); outline-offset:1px; }
+
 .plan-pill{
   font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.05em; text-transform:uppercase;
   background:var(--accent-soft); color:var(--accent-soft-ink); border-radius:6px; padding:0.15rem 0.5rem;
@@ -729,3 +996,27 @@ button.account-modal-row:hover{ background:var(--paper-sunken); }
 .log-dot{ width:7px; height:7px; border-radius:50%; flex-shrink:0; }
 .log-time, .log-model{ color:var(--ink-soft); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .log-tokens, .log-cost{ font-family:'JetBrains Mono',monospace; font-size:0.78rem; text-align:right; color:var(--ink-soft); }
+
+/* Toasts -- top-right stack, independent of the chat drawer so an approval
+   still confirms even after the drawer's closed. See toast.ts/ToastStack.tsx. */
+.toast-stack{
+  position:fixed; top:1.1rem; right:1.1rem; z-index:50; display:flex; flex-direction:column;
+  gap:0.6rem; width:320px; max-width:calc(100vw - 2.2rem); pointer-events:none;
+}
+.toast{
+  pointer-events:auto; display:flex; align-items:center; gap:0.55rem;
+  background:var(--paper-raised); border:1px solid var(--rule); border-radius:10px;
+  box-shadow:var(--shadow); padding:0.7rem 0.8rem; font-size:0.86rem; font-weight:600;
+  animation:toast-in 0.2s ease-out;
+}
+.toast svg{ width:15px; height:15px; flex-shrink:0; }
+.toast span{ flex:1; min-width:0; }
+.toast-success{ border-color:var(--done); }
+.toast-success svg{ color:var(--done); }
+.toast-info{ border-color:var(--accent); }
+.toast-error{ border-color:var(--accent-soft-ink); color:var(--accent-soft-ink); }
+.toast-close{ border:none; background:transparent; color:var(--ink-faint); cursor:pointer; padding:0.15rem; display:flex; flex-shrink:0; }
+.toast-close svg{ width:12px; height:12px; }
+.toast-close:hover{ color:var(--ink); }
+@keyframes toast-in{ from{ opacity:0; transform:translateX(16px); } to{ opacity:1; transform:translateX(0); } }
+@media (prefers-reduced-motion: reduce){ .toast{ animation:none; } }

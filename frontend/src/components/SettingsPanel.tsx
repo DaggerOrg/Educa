@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Session } from "../auth.ts";
+import { AGENT_REGISTRY } from "../agentRegistry.ts";
 import { initials } from "./AccountMenu.tsx";
 import {
   IconArrowDown,
@@ -13,11 +14,14 @@ import {
   IconUser,
 } from "./icons.tsx";
 
+export type SettingsTab = "account" | "usage" | "agents";
+
 interface SettingsPanelProps {
   session: Session;
+  initialTab?: SettingsTab;
+  disabledAgentKeys: Set<string>;
+  onToggleAgent: (key: string) => void;
 }
-
-type SettingsTab = "account" | "usage";
 
 // Placeholder figures below -- Agno already records per-run input/output
 // tokens in tmp/educa_agent.db, but those rows aren't scoped to a user and
@@ -41,8 +45,12 @@ const ACTIVITY_LOG = [
   { time: "Yesterday", feature: "Lesson chat", model: "Sonnet 5", tokens: "2,050", cost: "$0.10", color: "var(--violet)" },
 ];
 
-export default function SettingsPanel({ session }: SettingsPanelProps) {
-  const [tab, setTab] = useState<SettingsTab>("account");
+export default function SettingsPanel({ session, initialTab, disabledAgentKeys, onToggleAgent }: SettingsPanelProps) {
+  // Only read once per mount -- App.tsx remounts this component every time
+  // it navigates into "settings" from elsewhere, which is exactly when a
+  // fresh `initialTab` (e.g. "agents", from clicking a wheel icon) should
+  // take effect.
+  const [tab, setTab] = useState<SettingsTab>(() => initialTab ?? "account");
   const [navExpanded, setNavExpanded] = useState(true);
 
   return (
@@ -68,6 +76,15 @@ export default function SettingsPanel({ session }: SettingsPanelProps) {
             <IconLevel />
             <span className="settings-nav-label">AI usage &amp; limits</span>
           </button>
+          <button
+            type="button"
+            className={`settings-nav-btn${tab === "agents" ? " is-active" : ""}`}
+            title="AI Agents"
+            onClick={() => setTab("agents")}
+          >
+            <IconSparkle />
+            <span className="settings-nav-label">AI Agents</span>
+          </button>
         </div>
         <button
           type="button"
@@ -81,7 +98,13 @@ export default function SettingsPanel({ session }: SettingsPanelProps) {
       </nav>
 
       <div className="settings-content">
-        {tab === "account" ? <AccountTab session={session} /> : <UsageTab />}
+        {tab === "account" ? (
+          <AccountTab session={session} />
+        ) : tab === "usage" ? (
+          <UsageTab />
+        ) : (
+          <AgentsTab disabledAgentKeys={disabledAgentKeys} onToggleAgent={onToggleAgent} />
+        )}
       </div>
     </div>
   );
@@ -237,6 +260,40 @@ function UsageTab() {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface AgentsTabProps {
+  disabledAgentKeys: Set<string>;
+  onToggleAgent: (key: string) => void;
+}
+
+function AgentsTab({ disabledAgentKeys, onToggleAgent }: AgentsTabProps) {
+  return (
+    <div className="settings-stack">
+      <div className="settings-content-head">
+        <h2>AI Agents</h2>
+        <p>What each specialist on Studio's AI team does, and the agent wheel (bottom-right) that shows which ones are relevant to what you're doing.</p>
+      </div>
+      <div className="settings-card agent-list">
+        {AGENT_REGISTRY.map((a) => {
+          const enabled = !disabledAgentKeys.has(a.key);
+          return (
+            <div className="agent-list-row" key={a.key}>
+              <span className={`agent-settings-badge agent-wheel-icon--${a.hue}`}>{a.glyph}</span>
+              <div className="agent-list-main">
+                <div className="agent-list-name">{a.label}</div>
+                <p className="agent-list-description">{a.description}</p>
+              </div>
+              <label className="agent-toggle">
+                <input type="checkbox" checked={enabled} onChange={() => onToggleAgent(a.key)} />
+                <span className="agent-toggle-track"><span className="agent-toggle-thumb" /></span>
+              </label>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

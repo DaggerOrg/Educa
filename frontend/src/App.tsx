@@ -1,6 +1,6 @@
 import "@copilotkit/react-ui/v2/styles.css";
 import { HttpAgent } from "@ag-ui/client";
-import { CopilotChat, CopilotKitProvider, useAgentContext, useConfigureSuggestions } from "@copilotkit/react-core/v2";
+import { CopilotChat, CopilotKitProvider, useAgent, useAgentContext, useConfigureSuggestions } from "@copilotkit/react-core/v2";
 import type { JsonSerializable } from "@copilotkit/react-core/v2";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
@@ -17,20 +17,28 @@ import {
 import { getSession, logOut, type Session } from "./auth.ts";
 import AccountMenu from "./components/AccountMenu.tsx";
 import AccountModal, { type AccountModalKind } from "./components/AccountModal.tsx";
+import AgentWheel from "./components/AgentWheel.tsx";
 import { useCurriculumApprovals } from "./components/ApprovalCards.tsx";
 import Auth from "./components/Auth.tsx";
+import ChatHistoryPanel from "./components/ChatHistoryPanel.tsx";
 import CourseToolsRail, { type CourseTool } from "./components/CourseToolsRail.tsx";
+import CreativeStudio from "./components/CreativeStudio.tsx";
 import ExercisesBuilder from "./components/ExercisesBuilder.tsx";
+import TeachingAssistantConfig from "./components/TeachingAssistantConfig.tsx";
 import RoutinePanel from "./components/RoutinePanel.tsx";
-import SettingsPanel from "./components/SettingsPanel.tsx";
+import SettingsPanel, { type SettingsTab } from "./components/SettingsPanel.tsx";
 import ThemeToggle from "./components/ThemeToggle.tsx";
 import {
   IconChat,
   IconChevronLeft,
+  IconClock,
   IconClose,
   IconCourse,
   IconEdit,
+  IconGlobe,
   IconGraph,
+  IconMedia,
+  IconPlus,
   IconSettings,
   IconSparkle,
   IconStore,
@@ -43,10 +51,13 @@ import ListingForm from "./components/ListingForm.tsx";
 import Marketplace from "./components/Marketplace.tsx";
 import SyllabusView from "./components/SyllabusView.tsx";
 import TeacherChat from "./components/TeacherChat.tsx";
+import ToastStack from "./components/ToastStack.tsx";
 import WelcomePanel from "./components/WelcomePanel.tsx";
 import { STARTER_SUGGESTIONS } from "./starterSuggestions.ts";
 import EducaApp from "./educa/EducaApp.tsx";
+import { loadDisabledAgentKeys, saveDisabledAgentKeys } from "./agentRegistry.ts";
 import { formatPrice } from "./format.ts";
+import { useTheme } from "./theme.ts";
 import type { Course, Lesson, Listing, Week } from "./types.ts";
 
 const AGUI_URL = import.meta.env.VITE_AGUI_URL || "http://localhost:8000/agui";
@@ -106,13 +117,16 @@ function AuthenticatedApp({ session, onLogOut }: AuthenticatedAppProps) {
   );
 
   return (
-    <CopilotKitProvider agents__unsafe_dev_only={{ curriculum_team: agent }}>
+    <CopilotKitProvider agents__unsafe_dev_only={{ curriculum_team: agent }} enableInspector={false}>
       <Studio session={session} onLogOut={onLogOut} />
     </CopilotKitProvider>
   );
 }
 
+export type Section = "courses" | "course" | "marketplace" | "knowledge-graph" | "chat" | "creative" | "settings";
+
 function Studio({ session, onLogOut }: AuthenticatedAppProps) {
+  const theme = useTheme();
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [courseId, setCourseId] = useState<string | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
@@ -120,7 +134,11 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
   const [editedIds, setEditedIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
-  const [section, setSection] = useState<"courses" | "course" | "marketplace" | "knowledge-graph" | "chat" | "settings">("course");
+  const [chatHistoryOpen, setChatHistoryOpen] = useState(false);
+  // A fresh id by default (new conversation); set to a past session's id to
+  // resume it -- see the chat-drawer render below and ChatHistoryPanel.
+  const [chatThreadId, setChatThreadId] = useState<string>(() => crypto.randomUUID());
+  const [section, setSection] = useState<Section>("course");
   const [navExpanded, setNavExpanded] = useState(true);
   const [courseTool, setCourseTool] = useState<CourseTool>("syllabus");
   const [materialsModalOpen, setMaterialsModalOpen] = useState(false);
@@ -131,11 +149,41 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
   const [marketplaceListings, setMarketplaceListings] = useState<Listing[]>([]);
   const [marketplaceLoading, setMarketplaceLoading] = useState(false);
   const [marketplaceError, setMarketplaceError] = useState<string | null>(null);
+  // Which agents a teacher has switched off from Settings -> AI Agents
+  // (agentRegistry.ts) -- persisted to localStorage since it's a per-device
+  // UI preference (which wheel icons show), not something the backend
+  // Team needs to know about.
+  const [disabledAgentKeys, setDisabledAgentKeys] = useState<Set<string>>(() => loadDisabledAgentKeys());
+  // Which Settings tab to land on -- "account" via the normal Settings nav
+  // entry, "agents" when a teacher clicks an agent icon on the wheel to
+  // read about it. Only read once per mount of SettingsPanel (see its
+  // `initialTab` prop), which is exactly what happens here since entering
+  // "settings" from anywhere else always unmounts/remounts it.
+  const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>("account");
 
-  // Static starters shown as suggestion pills in the chat before the first
-  // message -- gives a first-time teacher something to click instead of
-  // facing a blank "type a message" box.
-  useConfigureSuggestions({ available: "before-first-message", suggestions: STARTER_SUGGESTIONS }, []);
+  useEffect(() => {
+    saveDisabledAgentKeys(disabledAgentKeys);
+  }, [disabledAgentKeys]);
+
+  function toggleAgentEnabled(key: string) {
+    setDisabledAgentKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  // Computed early (not just near the render) so both the location-context
+  // and suggestions hooks below can key off which lesson, if any, is open.
+  const selectedLesson = course ? findLesson(course, selectedLessonId) : null;
+  const selectedWeek = course ? findLessonWeek(course, selectedLessonId) : null;
+
+  // Same shared agent instance CopilotChat itself runs against (see the
+  // three `agentId="curriculum_team"` mounts below) -- `isRunning` is a real,
+  // reactive run-status flag (CopilotKit subscribes to onRunInitialized/
+  // onRunFinalized internally), not a value invented for the wheel.
+  const { agent: curriculumTeamAgent } = useAgent({ agentId: "curriculum_team" });
 
   // Renders an approve/reject card for each of the four curriculum-agent
   // tools (all `requires_confirmation=True`, see backend/app/agents/*/tools.py)
@@ -228,6 +276,79 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
     value: (course ? { ...course, edited: [...editedIds] } : "No course selected.") as unknown as JsonSerializable,
   });
 
+  // Tell the agent which screen the teacher is actually looking at right
+  // now, separate from *what course* they're on (above) -- e.g. so it knows
+  // to reach for generate_lesson_exercises instead of generate_lesson_slides
+  // when the Exercises tool is open, without the teacher having to say so.
+  useAgentContext({
+    description:
+      "Where the teacher currently is in Studio's UI right now -- which nav " +
+      "section, and inside Course builder, which tool tab and lesson (if " +
+      "any) is open. Prefer tools/answers that match this screen: the " +
+      "Exercises tool implies generate_lesson_exercises, AI Creative implies " +
+      "generate_creative_image, Knowledge Graph implies generate_knowledge_graph.",
+    value: {
+      section,
+      courseTool: section === "course" ? courseTool : null,
+      openLesson: section === "course" && selectedLesson ? { id: selectedLesson.id, title: selectedLesson.title } : null,
+    } as unknown as JsonSerializable,
+  });
+
+  // Suggestion pills shown in CopilotChat (the "Ask AI" drawer, Home's
+  // inline chat, and the Exercises chat all share this one config since
+  // they're all `agentId="curriculum_team"`). Home gets the static, concrete
+  // starters (nice for a cold start); everywhere else gets LLM-generated
+  // suggestions tailored to the current screen/decision point, kept fresh
+  // across the whole conversation rather than just before the first
+  // message -- see docs/README's "guide the teacher through every decision"
+  // framing. Sections with no relevant agent action (Marketplace/Chat/
+  // Settings) pass `null` to fully disable rather than show stale pills.
+  const dynamicSuggestionInstructions =
+    section === "course"
+      ? courseTool === "exercises"
+        ? "Suggest 2-3 short follow-ups for building practice exercises for this course -- e.g. a flashcard set, a true/false warm-up, or more multiple-choice practice for a specific lesson."
+        : courseTool === "ta"
+          ? "Suggest 2-3 short follow-ups for configuring this course's AI teaching assistant persona -- its name, tone, or what it should and shouldn't help students with."
+          : !selectedLesson
+            ? "Suggest 2-3 short follow-ups for refining this course's overall syllabus structure -- e.g. adding a week, reordering topics, or adjusting the audience/level."
+            : !selectedLesson.content
+              ? `Suggest 2-3 short follow-ups for drafting the lesson "${selectedLesson.title}" -- e.g. drafting slides, adding a real-world example, or adjusting its objective.`
+              : !selectedLesson.content.quiz
+                ? `Suggest 2-3 short follow-ups for finishing the lesson "${selectedLesson.title}", especially drafting its quiz question since it can't be published without one.`
+                : !selectedLesson.approved
+                  ? `Suggest 2-3 short follow-ups for reviewing the lesson "${selectedLesson.title}" before marking it ready to publish.`
+                  : `Suggest 2-3 short follow-ups for what to build next in this course now that "${selectedLesson.title}" is ready to publish.`
+      : section === "creative"
+        ? "Suggest 2-3 short prompts for generating a classroom-ready image -- e.g. a diagram, an illustration for a lesson topic, or a course banner."
+        : section === "knowledge-graph"
+          ? "Suggest 2-3 short follow-ups for building out this course's knowledge graph -- e.g. proposing a new board from the syllabus or from uploaded materials."
+          : null;
+
+  useConfigureSuggestions(
+    section === "courses"
+      // `consumerAgentId` scopes which agent's chat this config applies to
+      // -- needed because this hook runs at Studio's top level, outside any
+      // <CopilotChat>'s own chat-configuration context, so it has no
+      // ambient agent id to infer.
+      ? { suggestions: STARTER_SUGGESTIONS, available: "before-first-message", consumerAgentId: "curriculum_team" }
+      : dynamicSuggestionInstructions
+        ? {
+            instructions: dynamicSuggestionInstructions,
+            minSuggestions: 2,
+            maxSuggestions: 3,
+            available: "always",
+            consumerAgentId: "curriculum_team",
+            // Dynamic suggestions also need `providerAgentId` -- the agent
+            // actually run to *generate* the suggestion text. It defaults
+            // to CopilotKit's "default" sentinel id, which isn't a
+            // registered agent here (only "curriculum_team" is), and
+            // silently failed every reload until this was set explicitly.
+            providerAgentId: "curriculum_team",
+          }
+        : null,
+    [section, courseTool, dynamicSuggestionInstructions],
+  );
+
   function markEdited(lessonId: string) {
     setEditedIds((prev) => new Set(prev).add(lessonId));
   }
@@ -256,12 +377,11 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
     refreshCourseList();
   }
 
-  const selectedLesson = course ? findLesson(course, selectedLessonId) : null;
-  const selectedWeek = course ? findLessonWeek(course, selectedLessonId) : null;
   const activeListing = course ? myListings.find((l) => l.courseId === course.id && l.isActive) : undefined;
 
   return (
     <div className="layout">
+      <ToastStack />
       <header className="topbar">
         <div className="wordmark">EDUCA<span>.</span></div>
         <div className="topbar-right">
@@ -298,7 +418,7 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
               </button>
             )
           )}
-          <Link to="/educa" className="btn">Traditional view</Link>
+          <Link to="/educa" className="btn"><IconGlobe /> Traditional view</Link>
           <button
             type="button"
             className={`btn ask-ai-btn${chatOpen ? " is-active" : ""}`}
@@ -310,7 +430,10 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <ThemeToggle />
             <AccountMenu
               session={session}
-              onOpenSettings={() => setSection("settings")}
+              onOpenSettings={() => {
+                setSettingsInitialTab("account");
+                setSection("settings");
+              }}
               onOpenModal={setAccountModal}
               onLogOut={onLogOut}
             />
@@ -325,7 +448,8 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <button
               type="button"
               className={`nav-drawer-btn${section === "courses" ? " is-active" : ""}`}
-              title="Home"
+              aria-label="Home"
+              data-tooltip="Your courses"
               aria-current={section === "courses" ? "page" : undefined}
               onClick={() => setSection("courses")}
             >
@@ -335,7 +459,8 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <button
               type="button"
               className={`nav-drawer-btn${section === "course" ? " is-active" : ""}`}
-              title="Course builder"
+              aria-label="Course builder"
+              data-tooltip="Build your course"
               aria-current={section === "course" ? "page" : undefined}
               onClick={() => {
                 // Always land back on the module list, not whatever lesson
@@ -353,7 +478,8 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <button
               type="button"
               className={`nav-drawer-btn${section === "marketplace" ? " is-active" : ""}`}
-              title="Marketplace"
+              aria-label="Marketplace"
+              data-tooltip="Buy & sell courses"
               aria-current={section === "marketplace" ? "page" : undefined}
               onClick={() => setSection("marketplace")}
             >
@@ -363,7 +489,8 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <button
               type="button"
               className={`nav-drawer-btn${section === "knowledge-graph" ? " is-active" : ""}`}
-              title="Knowledge Graph"
+              aria-label="Knowledge Graph"
+              data-tooltip="Concept map"
               aria-current={section === "knowledge-graph" ? "page" : undefined}
               onClick={() => setSection("knowledge-graph")}
             >
@@ -373,12 +500,24 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <button
               type="button"
               className={`nav-drawer-btn${section === "chat" ? " is-active" : ""}`}
-              title="Chat"
+              aria-label="Chat"
+              data-tooltip="Message teachers"
               aria-current={section === "chat" ? "page" : undefined}
               onClick={() => setSection("chat")}
             >
               <IconChat />
               <span className="nav-drawer-label">Chat</span>
+            </button>
+            <button
+              type="button"
+              className={`nav-drawer-btn${section === "creative" ? " is-active" : ""}`}
+              aria-label="AI Creative"
+              data-tooltip="AI image generator"
+              aria-current={section === "creative" ? "page" : undefined}
+              onClick={() => setSection("creative")}
+            >
+              <IconMedia />
+              <span className="nav-drawer-label">AI Creative</span>
             </button>
           </div>
 
@@ -389,9 +528,13 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
             <button
               type="button"
               className={`nav-drawer-btn${section === "settings" ? " is-active" : ""}`}
-              title="Settings"
+              aria-label="Settings"
+              data-tooltip="Account settings"
               aria-current={section === "settings" ? "page" : undefined}
-              onClick={() => setSection("settings")}
+              onClick={() => {
+                setSettingsInitialTab("account");
+                setSection("settings");
+              }}
             >
               <IconSettings />
               <span className="nav-drawer-label">Settings</span>
@@ -412,11 +555,18 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
         <div className="workspace-main">
           {error && <div className="error-banner workspace-error">{error}</div>}
           {section === "settings" ? (
-            <SettingsPanel session={session} />
+            <SettingsPanel
+              session={session}
+              initialTab={settingsInitialTab}
+              disabledAgentKeys={disabledAgentKeys}
+              onToggleAgent={toggleAgentEnabled}
+            />
           ) : section === "knowledge-graph" ? (
             <KnowledgeGraphSection session={session} />
           ) : section === "chat" ? (
             <TeacherChat session={session} courses={myCourses} />
+          ) : section === "creative" ? (
+            <CreativeStudio />
           ) : section === "courses" ? (
             <Home
               courses={myCourses}
@@ -467,6 +617,8 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
               <CourseToolsRail active={courseTool} onSelect={setCourseTool} />
               {courseTool === "exercises" ? (
                 <ExercisesBuilder course={course} selectedLessonId={selectedLessonId} onSelectLesson={setSelectedLessonId} />
+              ) : courseTool === "ta" ? (
+                <TeachingAssistantConfig courseId={course.id} />
               ) : selectedLessonId ? (
                 <LessonPanel
                   lesson={selectedLesson}
@@ -491,24 +643,60 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
           {/* `dark` -- Tailwind ancestor-class convention CopilotKit's own
               v2 stylesheet uses for its dark palette (see
               @copilotkit/react-core/v2/styles.css's `:is(.dark *)`
-              utilities); without it CopilotChat renders its light theme
-              regardless of Studio's own black palette. */}
-          <aside className="chat-drawer dark">
+              utilities) -- only added when Studio itself is actually in
+              dark mode (see theme.ts's useTheme), not hardcoded, since a
+              hardcoded `dark` here forced CopilotChat black even while the
+              rest of Studio was in light mode. */}
+          <aside className={`chat-drawer${theme === "dark" ? " dark" : ""}`}>
             <div className="chat-drawer-head">
-              <span>Ask AI</span>
-              <button
-                type="button"
-                className="chat-drawer-close"
-                onClick={() => setChatOpen(false)}
-                aria-label="Close Ask AI"
-              >
-                <IconClose />
-              </button>
+              <span>{chatHistoryOpen ? "Past conversations" : "Ask AI"}</span>
+              <div className="chat-drawer-head-actions">
+                {!chatHistoryOpen && (
+                  <button
+                    type="button"
+                    className="chat-drawer-icon-btn"
+                    onClick={() => setChatThreadId(crypto.randomUUID())}
+                    title="New conversation"
+                    aria-label="Start a new conversation"
+                  >
+                    <IconPlus />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={`chat-drawer-icon-btn${chatHistoryOpen ? " is-active" : ""}`}
+                  onClick={() => setChatHistoryOpen((v) => !v)}
+                  title={chatHistoryOpen ? "Back to chat" : "Past conversations"}
+                  aria-label={chatHistoryOpen ? "Back to chat" : "Past conversations"}
+                >
+                  <IconClock />
+                </button>
+                <button
+                  type="button"
+                  className="chat-drawer-close"
+                  onClick={() => setChatOpen(false)}
+                  aria-label="Close Ask AI"
+                >
+                  <IconClose />
+                </button>
+              </div>
             </div>
-            {/* v2's CopilotChat has no `instructions` prop -- that was a silent
-                no-op in the pre-TS JS version. The agent's real instructions
-                live server-side in backend/app/agents/curriculum/agent.py. */}
-            <CopilotChat agentId="curriculum_team" />
+            {chatHistoryOpen ? (
+              <ChatHistoryPanel
+                onResume={(sessionId) => {
+                  setChatThreadId(sessionId);
+                  setChatHistoryOpen(false);
+                }}
+              />
+            ) : (
+              // v2's CopilotChat has no `instructions` prop -- that was a silent
+              // no-op in the pre-TS JS version. The agent's real instructions
+              // live server-side in backend/app/agents/curriculum/agent.py.
+              // `key`+`threadId` force a real remount on both "new conversation"
+              // and "resume a past one" -- otherwise CopilotChat keeps whatever
+              // messages are already in memory instead of switching threads.
+              <CopilotChat key={chatThreadId} agentId="curriculum_team" threadId={chatThreadId} />
+            )}
           </aside>
         </>
       )}
@@ -544,6 +732,24 @@ function Studio({ session, onLogOut }: AuthenticatedAppProps) {
       )}
 
       {accountModal && <AccountModal kind={accountModal} onClose={() => setAccountModal(null)} />}
+
+      {/* Hidden behind any overlay that already owns the bottom-right corner
+          (Ask AI drawer, materials/listing modals, the account modal) --
+          it's an ambient status widget, not something that should float on
+          top of a dialog the teacher is actively using. */}
+      {!chatOpen && !materialsModalOpen && !listingCourse && !accountModal && (
+        <AgentWheel
+          section={section}
+          courseTool={courseTool}
+          isRunning={curriculumTeamAgent.isRunning}
+          disabledAgentKeys={disabledAgentKeys}
+          onActivate={() => setChatOpen(true)}
+          onOpenAgentInfo={() => {
+            setSettingsInitialTab("agents");
+            setSection("settings");
+          }}
+        />
+      )}
     </div>
   );
 }

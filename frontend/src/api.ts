@@ -1,8 +1,11 @@
 import { extractErrorMessage } from "./apiError.ts";
 import { getToken } from "./auth.ts";
 import type {
+  ChatSession,
+  ChatTurn,
   Course,
   CoursePreview,
+  CreativeAsset,
   Enrollment,
   KgBoard,
   Lesson,
@@ -13,6 +16,8 @@ import type {
   QuizAttemptSummary,
   StudentLesson,
   StudentQuizAttemptResult,
+  TeacherPersona,
+  TeachingAssistant,
 } from "./types.ts";
 
 // Exported for TeacherChat.tsx, which calls this base directly (Liveblocks'
@@ -86,6 +91,58 @@ export const listMaterials = () => request<Material[]>("/materials");
 export const deleteMaterial = (materialId: string) =>
   request<{ ok: boolean }>(`/materials/${materialId}`, { method: "DELETE" });
 
+// ---- AI Creative: personal, cross-course media library -------------------
+
+export async function uploadCreativeAsset(file: File): Promise<CreativeAsset> {
+  const body = new FormData();
+  body.append("file", file);
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/creative/assets`, {
+    method: "POST",
+    body,
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!res.ok) {
+    const body2 = await res.json().catch(() => ({}));
+    throw new ApiError(extractErrorMessage(body2, res.statusText), res.status);
+  }
+  return res.json();
+}
+
+export const listCreativeAssets = () => request<CreativeAsset[]>("/creative/assets");
+
+export const creativeAssetFileUrl = (assetId: string) => `${API_BASE}/creative/assets/${assetId}/file`;
+
+export const deleteCreativeAsset = (assetId: string) =>
+  request<{ ok: boolean }>(`/creative/assets/${assetId}`, { method: "DELETE" });
+
+// ---- Teacher Persona -------------------------------------------------
+
+export const upsertPersona = (name: string, trainingAssetId: string, consented: boolean) =>
+  request<TeacherPersona>("/persona", { method: "POST", body: JSON.stringify({ name, trainingAssetId, consented }) });
+
+export const fetchMyPersona = () => request<TeacherPersona>("/persona");
+
+export const deletePersona = () => request<{ ok: boolean }>("/persona", { method: "DELETE" });
+
+export const fetchCoursePersona = (courseId: string) => request<TeacherPersona>(`/courses/${courseId}/persona`);
+
+// ---- AI Teaching Assistant ---------------------------------------------
+
+export const upsertTeachingAssistant = (courseId: string, name: string, instructions: string) =>
+  request<TeachingAssistant>(`/courses/${courseId}/ta`, { method: "POST", body: JSON.stringify({ name, instructions }) });
+
+export const fetchCourseTa = (courseId: string) => request<TeachingAssistant>(`/courses/${courseId}/ta`);
+
+export const deleteTeachingAssistant = (courseId: string) =>
+  request<{ ok: boolean }>(`/courses/${courseId}/ta`, { method: "DELETE" });
+
+export const askTeachingAssistant = (courseId: string, message: string, history: ChatTurn[]) =>
+  request<{ reply: string }>(`/courses/${courseId}/ta/chat`, {
+    method: "POST",
+    body: JSON.stringify({ message, history }),
+  });
+
 // ---- Catalog + student learning experience -------------------------------
 
 export const fetchCatalog = () => request<CoursePreview[]>("/courses");
@@ -144,3 +201,10 @@ export const renameKgBoard = (boardId: string, title: string) =>
 
 export const deleteKgBoard = (boardId: string) =>
   request<null>(`/kg-boards/${boardId}`, { method: "DELETE" });
+
+// ---- Ask AI chat history --------------------------------------------------
+
+export const listChatSessions = () => request<ChatSession[]>("/chat/sessions");
+
+export const fetchChatSessionTranscript = (sessionId: string) =>
+  request<ChatTurn[]>(`/chat/sessions/${sessionId}`);

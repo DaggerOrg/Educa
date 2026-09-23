@@ -5,9 +5,10 @@ import type { QuizAttemptSummary, StudentQuiz, StudentQuizAttemptResult } from "
 interface QuizTakerProps {
   lessonId: string;
   quiz: StudentQuiz;
+  onResult?: (result: StudentQuizAttemptResult) => void;
 }
 
-export default function QuizTaker({ lessonId, quiz }: QuizTakerProps) {
+export default function QuizTaker({ lessonId, quiz, onResult }: QuizTakerProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<StudentQuizAttemptResult | null>(null);
@@ -29,6 +30,7 @@ export default function QuizTaker({ lessonId, quiz }: QuizTakerProps) {
     try {
       const res = await submitQuizAttempt(lessonId, quiz.quizItemId, selected);
       setResult(res);
+      onResult?.(res);
       setAttempts(await fetchMyQuizAttempts(lessonId));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

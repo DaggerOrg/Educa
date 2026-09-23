@@ -18,6 +18,7 @@ from agno.tools import tool
 from pydantic import BaseModel, model_validator
 
 from ... import store
+from ... import audit
 from ...auth.context import current_user_id
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ def generate_lesson_quiz(lesson_id: str, quiz: QuizDraft) -> dict:
         logger.error("generate_lesson_quiz: no lesson with id %s", lesson_id)
         raise ValueError(f"No lesson with id {lesson_id}")
     logger.info("generate_lesson_quiz: saved quiz for lesson %s", lesson_id)
+    audit.record("generate_lesson_quiz", lesson_id, "Generated a lesson quiz")
     return lesson
 
 

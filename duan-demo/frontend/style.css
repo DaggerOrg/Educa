@@ -1,0 +1,330 @@
+:root {
+  --ink: #1c1b19;
+  --ink-soft: #55524c;
+  --ivory: #faf7f2;
+  --card: #ffffff;
+  --gold: #b08d57;
+  --gold-soft: #e8dcc4;
+  --border: #e5decf;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 0 20px 60px;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  padding: 28px 4px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.brand {
+  font-family: "Playfair Display", serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.tagline {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+main {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.intro h1 {
+  font-family: "Playfair Display", serif;
+  font-size: clamp(24px, 4vw, 34px);
+  margin: 0 0 10px;
+}
+
+.intro p {
+  color: var(--ink-soft);
+  max-width: 60ch;
+  line-height: 1.5;
+}
+
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-top: 24px;
+  box-shadow: 0 2px 16px rgba(28, 27, 25, 0.05);
+}
+
+#match-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 20px;
+}
+
+#match-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.optional {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+#match-form input {
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--ivory);
+  color: var(--ink);
+}
+
+#match-form input:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+#submit-btn {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ivory);
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+#submit-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+#submit-btn:not(:disabled):hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.pipeline-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 13px;
+  color: var(--ink-soft);
+  transition: all 0.2s ease;
+}
+
+.step .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.step.active {
+  border-color: var(--gold);
+  color: var(--ink);
+}
+
+.step.active .dot {
+  background: var(--gold);
+  box-shadow: 0 0 0 4px var(--gold-soft);
+}
+
+.step.done {
+  color: var(--ink);
+}
+
+.step.done .dot {
+  background: var(--ink);
+}
+
+.results {
+  margin-top: 36px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.card h2 {
+  font-family: "Playfair Display", serif;
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+#markers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  display: grid;
+  gap: 6px;
+}
+
+.astro-sign {
+  font-family: "Playfair Display", serif;
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.astrology-card p {
+  margin: 2px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.trait-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.trait-label {
+  color: var(--ink-soft);
+}
+
+.trait-bar-track {
+  height: 6px;
+  background: var(--gold-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.trait-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 999px;
+}
+
+.trait-score {
+  font-weight: 600;
+  width: 24px;
+  text-align: right;
+}
+
+.matches-title {
+  font-family: "Playfair Display", serif;
+  font-size: 20px;
+  margin: 32px 0 16px;
+}
+
+.matches-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.gem-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  position: relative;
+}
+
+.gem-swatch {
+  width: 100%;
+  height: 60px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.gem-rank {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.gem-card h3 {
+  font-family: "Playfair Display", serif;
+  margin: 0 0 4px;
+}
+
+.gem-score {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.gem-reasoning {
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.gem-description {
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.disclaimer {
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  #match-form {
+    grid-template-columns: 1fr;
+  }
+  .result-grid,
+  .matches-grid {
+    grid-template-columns: 1fr;
+  }
+}

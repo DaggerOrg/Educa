@@ -156,6 +156,59 @@ class LessonExercise(Base):
     lesson: Mapped["Lesson"] = relationship(back_populates="exercises")
 
 
+class CreativeAsset(Base):
+    """AI Creative: a personal, cross-course media library -- deliberately
+    not tied to a Course/Lesson, unlike LessonExercise. `storage_path` is a
+    relative path under backend/tmp/creative_uploads/ (see app/creative.py);
+    the row is metadata, the bytes live on disk, same "no external blob
+    storage dependency" spirit as the rest of this prototype."""
+
+    __tablename__ = "creative_assets"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: _id("asset"))
+    teacher_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    kind: Mapped[str]  # "image" | "video"
+    filename: Mapped[str]
+    content_type: Mapped[str]
+    storage_path: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
+class TeacherPersona(Base):
+    """One per teacher: an enrolled video/voice likeness (a short talking
+    clip doubles as both, matching how real avatar providers like HeyGen
+    actually ask for training data) plus an explicit consent timestamp.
+    No avatar-rendering provider is wired up (see app/persona.py) -- the
+    frontend shows a clearly-labeled mock playback, same honest split as
+    AI Creative's "Generate"."""
+
+    __tablename__ = "teacher_personas"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: _id("persona"))
+    teacher_id: Mapped[str] = mapped_column(ForeignKey("users.id"), unique=True)
+    name: Mapped[str]
+    training_asset_id: Mapped[str] = mapped_column(ForeignKey("creative_assets.id"))
+    consented_at: Mapped[datetime]
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
+class TeachingAssistant(Base):
+    """One per course: a teacher-authored AI persona (name + instructions)
+    that students chat with -- see app/teaching_assistant.py. Unlike
+    TeacherPersona this is a real, working feature (a plain text chat via
+    a freshly-built Agno Agent per request, not routed through the
+    teacher-only /agui team) -- no rendering provider needed."""
+
+    __tablename__ = "teaching_assistants"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: _id("ta"))
+    course_id: Mapped[str] = mapped_column(ForeignKey("courses.id"), unique=True)
+    teacher_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    name: Mapped[str]
+    instructions: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
 class QuizAttempt(Base):
     """Written once at submission -- `score`/`max_score` are stored facts,
     never recomputed if `QuizItem.correct_answer` changes later (it won't,
@@ -170,6 +223,10 @@ class QuizAttempt(Base):
     score: Mapped[int]
     max_score: Mapped[int]
     submitted_at: Mapped[datetime] = mapped_column(default=_now)
+    # Written after the fact by feedback_agent (see agents/feedback/tools.py)
+    # or a teacher -- unlike score/max_score this can be edited/re-set, it's
+    # commentary, not a graded fact the "written once" note above protects.
+    feedback: Mapped[str | None] = mapped_column(default=None)
 
     responses: Mapped[list["Response"]] = relationship(back_populates="attempt", cascade="all, delete-orphan")
 
@@ -247,3 +304,36 @@ class Purchase(Base):
     course_id: Mapped[str] = mapped_column(ForeignKey("courses.id"))
     price_cents: Mapped[int]
     purchased_at: Mapped[datetime] = mapped_column(default=_now)
+
+
+class AgentUsage(Base):
+    """Tokens one agent run consumed, attributed to the user who caused it --
+    the basis for per-user daily caps (app/usage.py). Only runs this backend
+    invokes directly are recorded (the student TA, the faculty panel); the
+    chat team runs inside Agno's AG-UI router and isn't metered here."""
+
+    __tablename__ = "agent_usage"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: _id("use"))
+    user_id: Mapped[str] = mapped_column(index=True)
+    agent: Mapped[str] = mapped_column(index=True)
+    model_id: Mapped[str | None] = mapped_column(default=None)
+    input_tokens: Mapped[int] = mapped_column(default=0)
+    output_tokens: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(default=_now, index=True)
+
+
+class AgentAuditLog(Base):
+    """One row per content-changing agent action a teacher approved -- what
+    was changed, by which tool, on whose behalf. Written by the tool itself
+    after its change is saved (app/audit.py), so a row exists only for
+    actions that really happened."""
+
+    __tablename__ = "agent_audit_log"
+
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: _id("aud"))
+    user_id: Mapped[str] = mapped_column(index=True)
+    action: Mapped[str]  # the tool name, e.g. "generate_lesson_quiz"
+    target_id: Mapped[str | None] = mapped_column(default=None)
+    summary: Mapped[str] = mapped_column(default="")
+    created_at: Mapped[datetime] = mapped_column(default=_now, index=True)

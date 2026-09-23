@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { computeClusteredLayout } from "../utils/graphLayout.ts";
+import { computeLaneLayout, placeInLane, type LayoutLink } from "../utils/graphLayout.ts";
 import { DEMO_GRAPH_ID, knowledgeGraphService } from "../services/knowledgeGraphService.ts";
 import type { KnowledgeNode, KnowledgeRelationship } from "../types/knowledgeGraph.ts";
+
+const toLinks = (rels: KnowledgeRelationship[]): LayoutLink[] =>
+  rels.map((r) => ({ source: r.sourceId, target: r.targetId, type: r.type }));
 
 export function useKnowledgeGraph() {
   const [nodes, setNodes] = useState<KnowledgeNode[]>([]);
@@ -16,7 +19,7 @@ export function useKnowledgeGraph() {
       .getGraph(DEMO_GRAPH_ID)
       .then((data) => {
         if (cancelled) return;
-        const positions = computeClusteredLayout(data.nodes);
+        const positions = computeLaneLayout(data.nodes, toLinks(data.relationships));
         setNodes(data.nodes.map((n) => ({ ...n, position: n.position ?? positions[n.id] })));
         setRelationships(data.relationships);
       })
@@ -30,7 +33,7 @@ export function useKnowledgeGraph() {
   const addNode = useCallback(async (input: Omit<KnowledgeNode, "id">) => {
     const created = await knowledgeGraphService.createNode(DEMO_GRAPH_ID, input);
     setNodes((prev) => {
-      const position = created.position ?? computeClusteredLayout([...prev, created])[created.id];
+      const position = created.position ?? placeInLane(created, prev);
       return [...prev, { ...created, position }];
     });
     return created;
@@ -73,10 +76,10 @@ export function useKnowledgeGraph() {
 
   const resetLayout = useCallback(() => {
     setNodes((prev) => {
-      const positions = computeClusteredLayout(prev);
+      const positions = computeLaneLayout(prev, toLinks(relationships));
       return prev.map((n) => ({ ...n, position: positions[n.id] }));
     });
-  }, []);
+  }, [relationships]);
 
   return {
     nodes,

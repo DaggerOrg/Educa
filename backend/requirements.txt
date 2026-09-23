@@ -2,9 +2,23 @@ fastapi==0.141.1
 uvicorn[standard]==0.30.6
 python-dotenv==1.0.1
 agno[sqlite,pgvector,openai,pdf,postgres,google]==3.0.6
+# Default local embedder for rag/embeddings.py (RAG_EMBEDDER_PROVIDER=local) --
+# no API key/billing needed; set RAG_EMBEDDER_PROVIDER=openai to use OpenAI instead.
+sentence-transformers==6.0.1
 python-multipart==0.0.20
 anthropic==1.4.0
 ag-ui-protocol==0.1.22
 pyjwt==2.10.1
 email-validator==2.3.0
 httpx==0.28.1
+# Agno's AGUI interface uses this to compute STATE_DELTA events
+# (agno/os/interfaces/agui/state.py) -- without it every chat turn logs
+# "Failed to compute state delta: No module named 'jsonpatch'" and falls
+# back to full-snapshot state updates instead of deltas.
+jsonpatch==1.33
+
+# curriculum_ai/ -- document ingestion foundation (see
+# docs/architecture/educa-ai-architecture.md)
+boto3==1.43.97           # S3-compatible object storage (works against MinIO locally)
+rq==2.12.0                # background job queue
+redis==8.1.0               # rq's broker client

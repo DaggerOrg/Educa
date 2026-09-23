@@ -20,21 +20,25 @@ import io
 import os
 
 from agno.knowledge.document.base import Document
-from agno.knowledge.embedder.openai import OpenAIEmbedder
 from agno.knowledge.knowledge import Knowledge
 from agno.knowledge.reader.pdf_reader import PDFReader
 from agno.knowledge.reader.text_reader import TextReader
 from agno.vectordb.pgvector import PgVector
 from agno.vectordb.search import SearchType
+
+from rag.embeddings import build_embedder
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
+# Same embedder selection as rag/store.py (RAG_EMBEDDER_PROVIDER, "local" by
+# default) - no API key/billing needed. See rag/README.md; the two vector
+# stores are otherwise independent (different tables, different feature).
 vector_db = PgVector(
     table_name="course_materials",
     db_url=os.environ["DATABASE_URL"],
-    embedder=OpenAIEmbedder(id="text-embedding-3-small"),
+    embedder=build_embedder(),
     search_type=SearchType.hybrid,  # blends vector similarity with Postgres full-text
 )
 vector_db.create()

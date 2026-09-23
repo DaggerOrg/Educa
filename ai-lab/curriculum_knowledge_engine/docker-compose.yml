@@ -1,0 +1,29 @@
+# Optional production backends. Local development needs none of this -
+# Chroma (vector) and NetworkX (graph) run in-process against ./var.
+# `docker compose up -d` and set CKE_VECTOR_BACKEND=pgvector /
+# CKE_GRAPH_BACKEND=neo4j in .env to switch to these.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: cke
+      POSTGRES_PASSWORD: cke
+      POSTGRES_DB: cke
+    ports:
+      - "5432:5432"
+    volumes:
+      - cke_postgres_data:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/change-me-please
+    ports:
+      - "7474:7474" # browser UI
+      - "7687:7687" # bolt
+    volumes:
+      - cke_neo4j_data:/data
+
+volumes:
+  cke_postgres_data:
+  cke_neo4j_data:

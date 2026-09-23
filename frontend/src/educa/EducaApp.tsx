@@ -4,7 +4,9 @@ import ThemeToggle from "../components/ThemeToggle.tsx";
 import Catalog from "./Catalog.tsx";
 import CourseDetail from "./CourseDetail.tsx";
 import Dashboard from "./Dashboard.tsx";
+import Gradebook from "./Gradebook.tsx";
 import LessonView from "./LessonView.tsx";
+import Roster from "./Roster.tsx";
 
 interface EducaAppProps {
   session: Session;
@@ -45,6 +47,8 @@ export default function EducaApp({ session, onLogOut }: EducaAppProps) {
           <Route index element={<Dashboard session={session} />} />
           <Route path="catalog" element={<Catalog session={session} />} />
           <Route path="courses/:courseId" element={<CourseDetail session={session} />} />
+          <Route path="courses/:courseId/gradebook" element={<Gradebook session={session} />} />
+          <Route path="courses/:courseId/roster" element={<Roster session={session} />} />
           <Route path="courses/:courseId/lessons/:lessonId" element={<LessonView session={session} />} />
         </Routes>
       </div>

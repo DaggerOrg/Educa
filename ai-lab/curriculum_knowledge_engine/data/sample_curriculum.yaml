@@ -1,0 +1,762 @@
+id: ai-engineering-foundations
+title: AI Engineering Foundations
+description: >
+  A practical, graph-structured curriculum covering the concepts an AI
+  engineer needs to build production LLM systems - from neural network
+  basics through transformers, retrieval, knowledge graphs, and agents.
+difficulty: intermediate
+
+concepts:
+  - name: Python Programming
+    description: >
+      Writing and reasoning about Python code well enough to build and
+      debug machine learning pipelines.
+    difficulty: beginner
+
+  - name: Linear Algebra Basics
+    description: >
+      Vectors, matrices, dot products, and matrix multiplication - the
+      arithmetic that every neural network is built from.
+    difficulty: beginner
+
+  - name: Neural Networks
+    description: >
+      Layers, weights, activation functions, and gradient descent - how a
+      network turns input numbers into output numbers it can learn to
+      improve.
+    difficulty: beginner
+    requires: [Python Programming, Linear Algebra Basics]
+
+  - name: Tokenization
+    description: >
+      Splitting raw text into the discrete units (tokens) a language model
+      actually operates on.
+    difficulty: beginner
+    requires: [Neural Networks]
+
+  - name: Transformer Architecture
+    description: >
+      The self-attention-based architecture behind every modern large
+      language model.
+    difficulty: intermediate
+    requires: [Neural Networks]
+    aliases: [Transformers]
+
+  - name: Self-Attention
+    description: >
+      The mechanism that lets every token in a sequence weigh every other
+      token when building its own representation.
+    difficulty: intermediate
+    requires: [Transformer Architecture]
+
+  - name: Embeddings
+    description: >
+      Dense vectors that place semantically similar text close together in
+      a high-dimensional space.
+    difficulty: intermediate
+    requires: [Transformer Architecture, Tokenization]
+
+  - name: Large Language Models
+    description: >
+      Transformer models trained at scale to predict and generate text,
+      code, and structured output.
+    difficulty: intermediate
+    requires: [Transformer Architecture, Self-Attention]
+    aliases: [LLM, LLMs]
+
+  - name: Prompt Engineering
+    description: >
+      Designing the instructions and context given to a language model to
+      reliably get the output you want.
+    difficulty: beginner
+    requires: [Large Language Models]
+
+  - name: Prompt Caching and Cost Optimization
+    description: >
+      Reusing a model's processed context across requests to cut latency
+      and cost, and the broader practice of controlling what an LLM
+      application spends.
+    difficulty: intermediate
+    requires: [Large Language Models, Prompt Engineering]
+
+  - name: Fine-Tuning
+    description: >
+      Further training a pretrained model on task-specific examples,
+      versus steering it purely through prompting.
+    difficulty: advanced
+    requires: [Large Language Models]
+
+  - name: Vector Databases
+    description: >
+      Storage systems specialized for nearest-neighbor search over
+      embeddings.
+    difficulty: intermediate
+    requires: [Embeddings]
+
+  - name: Retrieval-Augmented Generation
+    description: >
+      Grounding a language model's answers in retrieved external content
+      instead of relying only on what it memorized during training.
+    difficulty: intermediate
+    requires: [Vector Databases, Prompt Engineering]
+    aliases: [RAG]
+
+  - name: Knowledge Graphs
+    description: >
+      Representing entities as nodes and their typed relationships as
+      edges, enabling structured, multi-hop reasoning that similarity
+      search alone cannot express.
+    difficulty: intermediate
+
+  - name: GraphRAG
+    description: >
+      Combining a knowledge graph's structured relationships with a vector
+      store's unstructured supporting text in one retrieval pipeline.
+    difficulty: advanced
+    requires: [Retrieval-Augmented Generation, Knowledge Graphs]
+
+  - name: Tool Use and Function Calling
+    description: >
+      Letting a language model invoke external functions and act on their
+      results as part of generating a response.
+    difficulty: intermediate
+    requires: [Large Language Models, Prompt Engineering]
+    aliases: [Function Calling, Tool Use]
+
+  - name: AI Agents
+    description: >
+      Systems where a language model plans, calls tools, and iterates
+      toward a goal with limited step-by-step human supervision.
+    difficulty: advanced
+    requires: [Tool Use and Function Calling, Retrieval-Augmented Generation]
+
+  - name: Evaluating LLM Systems
+    description: >
+      Building test sets, grading methods, and metrics to measure whether
+      an LLM-powered system is actually working, before and after changes.
+    difficulty: advanced
+    requires: [AI Agents, GraphRAG]
+
+modules:
+  - id: foundations
+    title: Foundations
+    description: The math and programming grounding for everything that follows.
+    lessons:
+      - id: python-for-ai-engineering
+        title: Python for AI Engineering
+        estimated_minutes: 20
+        teaches: [Python Programming]
+        objectives:
+          - text: Read and modify a data-processing script without breaking it.
+            bloom_level: apply
+        content: |
+          AI engineering work is written almost entirely in Python: the major
+          ML frameworks (PyTorch, JAX), the retrieval libraries (LlamaIndex,
+          LangChain), and every vector and graph database client used in this
+          curriculum expose a Python API first. You don't need to be a
+          systems programmer, but you do need to be comfortable with a
+          specific slice of the language - list and dict comprehensions,
+          generators, context managers (`with` blocks), type hints, and
+          async/await for calling network APIs concurrently.
+
+          Two habits matter more than syntax knowledge. First, get
+          comfortable reading library source code and stack traces; most of
+          debugging an ML pipeline is understanding what shape of data a
+          function actually received versus what it expected. Second, write
+          small, composable functions with clear inputs and outputs rather
+          than long scripts with shared mutable state - this matters even
+          more once a pipeline has an ingestion stage, an embedding stage,
+          and a generation stage that all need to be tested independently.
+
+          By the end of this lesson you should be able to trace through a
+          short data-processing script, predict what each function returns,
+          and modify it to add a new field without breaking the rest of the
+          pipeline.
+
+      - id: linear-algebra-you-actually-need
+        title: Linear Algebra You Actually Need
+        estimated_minutes: 25
+        teaches: [Linear Algebra Basics]
+        objectives:
+          - text: Compute a dot product and explain what it measures.
+            bloom_level: understand
+        content: |
+          Every embedding is a vector, every neural network layer is a
+          matrix multiplication, and every similarity search is built on
+          the dot product. You don't need a full linear algebra course to
+          do AI engineering, but you do need working intuition for a small
+          set of operations.
+
+          A vector is just an ordered list of numbers - think of a word
+          embedding as a point in a few-hundred-dimensional space, where
+          each dimension captures some (uninterpretable, learned) aspect of
+          meaning. The dot product of two vectors is the sum of their
+          elementwise products, and it grows larger when the vectors point
+          in a similar direction - this is exactly why cosine similarity,
+          which normalizes the dot product by vector length, is the
+          standard way to compare two embeddings. Matrix multiplication is
+          just many dot products computed at once: a neural network layer
+          multiplies an input vector by a weight matrix to produce an
+          output vector, and stacking these layers is what lets a network
+          build up increasingly abstract representations of its input.
+
+          You should walk away able to compute a dot product by hand for a
+          short vector, and explain in plain language why two similar
+          pieces of text end up with embeddings that have a high dot
+          product.
+
+      - id: neural-networks-from-first-principles
+        title: Neural Networks From First Principles
+        estimated_minutes: 30
+        teaches: [Neural Networks]
+        objectives:
+          - text: Describe forward and backward passes through a small network.
+            bloom_level: understand
+        content: |
+          A neural network is a stack of layers, each one a matrix
+          multiplication followed by a nonlinear activation function (such
+          as ReLU or GELU). The matrix multiplication lets the layer
+          combine its inputs in weighted ways; the nonlinearity is what
+          lets a deep stack of such layers approximate far more complex
+          functions than a single linear layer ever could. A "forward
+          pass" is simply feeding an input through every layer in order to
+          produce an output - a prediction.
+
+          Training is the process of adjusting every weight in every layer
+          so the network's predictions get closer to the correct answer.
+          This works by defining a loss function that scores how wrong a
+          prediction was, then using backpropagation - repeated application
+          of the chain rule from calculus - to compute how much each
+          individual weight contributed to that error. Gradient descent
+          then nudges every weight slightly in the direction that reduces
+          the loss, and this process repeats over millions of examples.
+
+          Modern large language models are, at their core, an extremely
+          large stack of a particular kind of layer - the transformer
+          block, covered next - trained this same way, just at a scale
+          that makes it economically and computationally serious
+          engineering rather than a weekend project.
+
+  - id: transformers-and-llms
+    title: Transformers and Language Models
+    description: How raw text becomes the representations a language model reasons over.
+    lessons:
+      - id: tokenization-turning-text-into-numbers
+        title: "Tokenization: Turning Text Into Numbers"
+        estimated_minutes: 15
+        teaches: [Tokenization]
+        objectives:
+          - text: Explain why a model has a fixed vocabulary of tokens rather than words.
+            bloom_level: understand
+        content: |
+          A neural network only operates on numbers, so the first step in
+          any language model pipeline is converting text into a sequence
+          of integers - tokenization. Modern tokenizers use subword
+          algorithms (such as byte-pair encoding) that learn a fixed
+          vocabulary of common character sequences from a large corpus:
+          frequent whole words become single tokens, rarer words get split
+          into meaningful pieces, and any input, even in a language the
+          tokenizer has barely seen, can still be represented as some
+          sequence of these subword pieces plus individual bytes as a
+          fallback.
+
+          This design is a deliberate trade-off. A vocabulary of whole
+          words would be enormous and still fail on typos, new words, and
+          rare languages. A vocabulary of individual characters would
+          never run out of coverage but would make sequences much longer,
+          which is expensive since a transformer's compute cost grows with
+          sequence length. Subword tokenization sits in between: common
+          patterns stay compact, rare patterns still get represented, and
+          the vocabulary size (typically tens of thousands of tokens)
+          stays manageable.
+
+          Every downstream cost - context window limits, API pricing,
+          latency - is measured in tokens, not words or characters, which
+          is why understanding tokenization is a practical, not just
+          theoretical, concern for AI engineers.
+
+      - id: the-transformer-architecture
+        title: The Transformer Architecture
+        estimated_minutes: 30
+        teaches: [Transformer Architecture]
+        objectives:
+          - text: Diagram the two sub-layers inside one transformer block.
+            bloom_level: understand
+        content: |
+          Introduced in the 2017 paper "Attention Is All You Need", the
+          transformer replaced the recurrent networks (RNNs) that
+          previously dominated language modeling. An RNN processes a
+          sequence one token at a time, carrying forward a hidden state -
+          which makes it inherently sequential and hard to parallelize. A
+          transformer instead processes an entire sequence at once, using
+          self-attention to let every token directly look at every other
+          token, regardless of distance between them.
+
+          A transformer block has two sub-layers: a self-attention layer,
+          followed by a position-wise feed-forward network, each wrapped
+          with a residual connection (the layer's output is added back to
+          its input) and layer normalization. The residual connections are
+          what make it practical to stack dozens of these blocks without
+          training becoming unstable; each block refines the running
+          representation of the sequence a little further.
+
+          Because a transformer can process a whole sequence in parallel
+          on a GPU rather than one token at a time, it scales dramatically
+          better to large datasets and large models than an RNN does -
+          which is the single biggest reason transformers, not RNNs, are
+          the architecture behind every current large language model.
+
+      - id: self-attention-in-depth
+        title: Self-Attention In Depth
+        estimated_minutes: 30
+        teaches: [Self-Attention]
+        objectives:
+          - text: Explain the role of queries, keys, and values in self-attention.
+            bloom_level: understand
+        content: |
+          Self-attention lets every position in a sequence build its
+          representation by selectively weighting information from every
+          other position. Mechanically, each token's embedding is
+          projected into three vectors: a query, a key, and a value. A
+          token's query is compared (via dot product) against every
+          token's key to produce a raw attention score, which is then
+          scaled and passed through a softmax to produce a weight between
+          0 and 1 for every other token; the token's new representation is
+          the weighted sum of every token's value vector, using those
+          weights.
+
+          Intuitively, the query says "what am I looking for", the key
+          says "what do I contain", and a high dot product between a
+          query and a key means that key's value is relevant and should
+          contribute strongly to the output. This is what lets a
+          transformer resolve something like pronoun reference - the
+          query from "it" can attend strongly to the key from the noun it
+          refers to, regardless of how many tokens sit in between.
+
+          "Multi-head" attention runs several of these query/key/value
+          projections in parallel with different learned weights, letting
+          different heads specialize in different kinds of relationships
+          (say, syntactic structure versus long-range topical relevance),
+          and concatenating their outputs back together before the next
+          layer.
+
+      - id: embeddings-and-semantic-space
+        title: Embeddings and Semantic Space
+        estimated_minutes: 20
+        teaches: [Embeddings]
+        objectives:
+          - text: Explain why semantically similar text ends up with nearby embeddings.
+            bloom_level: understand
+        content: |
+          An embedding model maps a piece of text to a dense vector -
+          typically a few hundred to a few thousand numbers - such that
+          semantically similar text maps to nearby vectors, measured by
+          cosine similarity or Euclidean distance. This is a direct
+          consequence of how these models are trained: an embedding model
+          learns from massive amounts of text to place text with similar
+          meaning or that co-occurs in similar contexts close together in
+          this vector space, without ever being told explicit rules about
+          what "similar" means.
+
+          This is the capability that makes semantic search possible: a
+          query and a passage can share zero exact keywords and still be
+          found as relevant, because what's being compared is meaning
+          (via the embedding vectors), not surface text. It's also the
+          foundation every vector database and every RAG pipeline in this
+          curriculum builds on.
+
+          Not every embedding model is trained the same way, and picking
+          the right one is itself an engineering decision - a model
+          optimized for short-query-to-long-passage retrieval behaves
+          differently than one optimized for measuring similarity between
+          two full documents, even though both produce "embeddings" in the
+          generic sense.
+
+      - id: what-makes-a-large-language-model
+        title: What Makes a Large Language Model
+        estimated_minutes: 20
+        teaches: [Large Language Models]
+        objectives:
+          - text: Describe next-token prediction as the core LLM training objective.
+            bloom_level: understand
+        content: |
+          A large language model is a transformer trained at scale - often
+          on trillions of tokens of text and code - on a deceptively
+          simple objective: predict the next token given everything that
+          came before it. Doing this well across a large enough and
+          diverse enough training set forces the model to implicitly learn
+          grammar, facts, reasoning patterns, and coding conventions, none
+          of which were labeled explicitly; they emerge as a byproduct of
+          getting very good at next-token prediction.
+
+          Scale matters in a specific, measured way: as model size,
+          training data, and compute all increase together, capability
+          tends to improve predictably (described by so-called "scaling
+          laws"), which is why the field has repeatedly found that a
+          larger, better-trained model of the same basic architecture
+          outperforms smaller models even without algorithmic
+          breakthroughs - though architectural and training improvements
+          matter too, and are a major source of recent progress
+          independent of raw scale.
+
+          For an AI engineer, the practical implication is that "the
+          model" is rarely the place you have the most leverage day to
+          day. Prompt design, retrieval quality, and tool integration -
+          the rest of this curriculum - are usually where an application's
+          quality is won or lost, because the underlying model's raw
+          capability is mostly fixed once you've chosen which one to use.
+
+  - id: prompting-and-cost
+    title: Prompting and Cost-Aware LLM Usage
+    description: Getting reliable behavior out of a model, and paying for it responsibly.
+    lessons:
+      - id: prompt-engineering-fundamentals
+        title: Prompt Engineering Fundamentals
+        estimated_minutes: 20
+        teaches: [Prompt Engineering]
+        objectives:
+          - text: Rewrite a vague prompt into one with explicit format and constraints.
+            bloom_level: apply
+        content: |
+          Prompt engineering is the practice of shaping the input to a
+          language model - instructions, examples, and context - so its
+          output reliably matches what you actually need. The single
+          biggest lever is specificity: a prompt that states the desired
+          output format, the constraints, and what "good" looks like will
+          consistently outperform a vague one, even with an identical
+          underlying model.
+
+          A few patterns show up repeatedly in production prompts. A
+          system prompt sets stable, role-level behavior (tone, scope,
+          output format) that should apply across an entire conversation.
+          Few-shot examples - showing the model one or two example
+          input/output pairs - are often more effective than describing a
+          format in the abstract, especially for structured or
+          stylistically specific output. And explicitly telling a model
+          what to do when it doesn't know something ("say you don't know
+          rather than guessing") measurably reduces confident-sounding
+          wrong answers, which matters enormously once a system is
+          answering real users' questions.
+
+          Prompt engineering is not a one-time step - it's an iterative
+          process of writing a prompt, checking real outputs against real
+          examples, and refining based on where it actually fails, which
+          is exactly why Module 6's lesson on evaluation matters as much
+          as this one.
+
+      - id: prompt-caching-and-cost-optimization
+        title: Prompt Caching and Cost Optimization
+        estimated_minutes: 20
+        teaches: [Prompt Caching and Cost Optimization]
+        objectives:
+          - text: Identify which parts of a prompt are good candidates for caching.
+            bloom_level: apply
+        content: |
+          LLM API costs scale with tokens processed, and a production
+          system's system prompt, tool definitions, and retrieved
+          reference documents are often re-sent, unchanged, on every
+          single request. Prompt caching lets a provider reuse the
+          internal computation for a previously-seen prefix of a request,
+          which is both dramatically cheaper and faster than reprocessing
+          it from scratch every time.
+
+          The practical rule is a prefix match: caching only helps the
+          part of the prompt that is byte-for-byte identical to a
+          previous request, from the start. This means stable content
+          (system instructions, a frozen tool list, a large reference
+          document) belongs first in the request, and volatile content
+          (a timestamp, a user's specific question, a session ID) belongs
+          last - putting volatile content early invalidates the cache for
+          everything after it, even if the rest of the request is
+          identical to a previous one.
+
+          Beyond caching, cost-aware engineering means matching model
+          choice to task difficulty (a cheaper, faster model for
+          simple classification; a more capable model reserved for hard
+          reasoning), controlling how much output a model generates, and
+          measuring cost per completed task rather than per request - a
+          cheaper request that needs three retries to succeed isn't
+          actually cheaper.
+
+      - id: fine-tuning-vs-prompting
+        title: Fine-Tuning vs Prompting
+        estimated_minutes: 20
+        teaches: [Fine-Tuning]
+        objectives:
+          - text: Give a concrete scenario where fine-tuning is justified over prompting.
+            bloom_level: evaluate
+        content: |
+          Prompting steers a fixed, pretrained model's behavior at request
+          time by changing its input. Fine-tuning instead further trains
+          the model's weights on task-specific examples, permanently
+          changing how it behaves - even with a plain prompt afterward.
+          The two are not competitors so much as tools with different
+          costs and different problems they solve well.
+
+          Prompting - especially with retrieval providing fresh context -
+          is almost always the right starting point: it requires no
+          training infrastructure, updates instantly when requirements
+          change, and lets you swap the underlying model freely. Fine-
+          tuning earns its cost in narrower cases: teaching a model a very
+          specific output format or style at high reliability and low
+          latency (so you don't need a long few-shot prompt every
+          request), adapting a smaller/cheaper model to match a larger
+          model's quality on one narrow task, or teaching behaviors that
+          are hard to fully specify through instructions alone.
+
+          A common mistake is reaching for fine-tuning to fix a knowledge
+          gap - "the model doesn't know about our product" - when
+          retrieval-augmented generation solves that same problem far more
+          cheaply and stays current automatically as the underlying
+          knowledge changes, without a retraining cycle.
+
+  - id: retrieval-and-vectors
+    title: Retrieval and Vector Search
+    description: Grounding a model's answers in your own content.
+    lessons:
+      - id: vector-databases-and-nearest-neighbor-search
+        title: Vector Databases and Nearest-Neighbor Search
+        estimated_minutes: 20
+        teaches: [Vector Databases]
+        objectives:
+          - text: Explain what a vector database returns given a query embedding.
+            bloom_level: understand
+        content: |
+          A vector database stores embeddings and, given a query
+          embedding, efficiently returns the stored embeddings closest to
+          it - nearest-neighbor search. At small scale, this could be done
+          with a brute-force comparison against every stored vector, but
+          production vector databases use approximate nearest-neighbor
+          index structures (such as HNSW) that trade a small amount of
+          recall for enormous speedups at millions or billions of vectors.
+
+          Most vector databases also support metadata filtering, so a
+          query can be restricted - for example, to only chunks from a
+          specific course, or only chunks tagged with a specific concept -
+          either before or after the similarity search itself runs. This
+          matters enormously in a multi-tenant or multi-course system,
+          where an unfiltered search could easily surface content that's
+          technically similar but contextually wrong.
+
+          Chroma, used as the default local backend in this project, runs
+          entirely on disk with no external service - convenient for
+          development. Production deployments often move to pgvector (a
+          Postgres extension, convenient if you already run Postgres) or a
+          dedicated system like Pinecone, Weaviate, or Qdrant, chosen for
+          scale, latency, or operational fit rather than a fundamentally
+          different retrieval model.
+
+      - id: retrieval-augmented-generation
+        title: Retrieval-Augmented Generation
+        estimated_minutes: 25
+        teaches: [Retrieval-Augmented Generation]
+        objectives:
+          - text: Diagram the ingestion stage and the query stage of a RAG pipeline.
+            bloom_level: apply
+        content: |
+          Retrieval-Augmented Generation grounds a language model's
+          answers in content retrieved at request time, instead of relying
+          solely on what the model memorized during training. A RAG
+          pipeline has two stages. Ingestion splits source documents into
+          chunks, embeds each chunk, and stores the vectors in a vector
+          database. At query time, the user's question is embedded with
+          the same embedding model, the most similar chunks are retrieved,
+          and those chunks are passed to the language model as context
+          alongside the original question, so it can generate an answer
+          grounded in that specific retrieved content.
+
+          RAG's core value is twofold: it lets a system answer questions
+          about content that's private, proprietary, or changes
+          frequently, without retraining a model every time that content
+          changes; and it lets the system cite exactly which source chunks
+          it used, which both builds trust and gives you a concrete way to
+          check an answer's grounding, sharply reducing (though not
+          eliminating) hallucination compared to asking a model to answer
+          purely from memory.
+
+          Chunking strategy is a real design decision, not a formality -
+          chunks too large dilute retrieval precision (a chunk might be
+          "about" many things, none very strongly), while chunks too small
+          lose surrounding context the model would need to answer well;
+          most production systems tune chunk size and overlap
+          empirically against their own content and query patterns.
+
+  - id: knowledge-graphs-and-graphrag
+    title: Knowledge Graphs and GraphRAG
+    description: Structured relationships, and combining them with retrieval.
+    lessons:
+      - id: modeling-knowledge-as-a-graph
+        title: Modeling Knowledge as a Graph
+        estimated_minutes: 20
+        teaches: [Knowledge Graphs]
+        objectives:
+          - text: Model a small domain as nodes and typed relationships.
+            bloom_level: apply
+        content: |
+          A knowledge graph represents information as entities (nodes) and
+          typed relationships between them (edges) - for example, "RAG"
+          --depends on--> "Vector Databases". Unlike a vector store, which
+          only knows that two chunks of text are semantically similar, a
+          graph can represent precise, structured relationships and
+          support multi-hop reasoning: "what does X depend on, and what
+          does that in turn depend on" is a graph traversal, not a
+          similarity search.
+
+          Building a graph from unstructured text is itself increasingly a
+          language-model task: an LLM can read a document and propose
+          entities and relationships it describes, which a human or a
+          validation step then accepts, rejects, or corrects - exactly the
+          pattern this curriculum's own ingestion pipeline uses, keeping
+          human-authored prerequisite edges authoritative and treating
+          LLM-proposed edges as a lower-trust enrichment layer with its own
+          confidence score.
+
+          Graph databases such as Neo4j are built for exactly this - fast
+          traversal of typed relationships at scale via a query language
+          (Cypher). For smaller or simpler cases, an in-memory graph
+          library such as Python's NetworkX is often enough, and is the
+          default local backend used in this project.
+
+      - id: graphrag-combining-structure-and-retrieval
+        title: "GraphRAG: Combining Structure and Retrieval"
+        estimated_minutes: 25
+        teaches: [GraphRAG]
+        objectives:
+          - text: Explain what a graph traversal adds that vector search alone cannot provide.
+            bloom_level: evaluate
+        content: |
+          GraphRAG combines a knowledge graph's structured relationships
+          with a vector store's unstructured supporting text in a single
+          retrieval pipeline: given a question, the system retrieves
+          semantically relevant text chunks (as in standard RAG) and also
+          identifies which graph concepts the question touches, pulling
+          in their direct relationships - prerequisites, dependents,
+          related topics - as additional structured context. Both are
+          handed to the language model together.
+
+          This matters most exactly where plain vector search
+          structurally cannot help: multi-hop questions ("what do I need
+          to learn before I can understand GraphRAG?") require walking a
+          chain of dependency relationships that no single chunk of text
+          is likely to state end to end, even if every individual link in
+          that chain is well documented somewhere in the corpus. A vector
+          search over the corpus will surface chunks about GraphRAG and
+          chunks about its immediate prerequisites, but assembling the
+          full transitive chain, in the correct order, is a graph
+          traversal problem, not a similarity-search problem.
+
+          The engineering discipline that makes this trustworthy is
+          keeping the two sources cleanly separated in the prompt sent to
+          the model - clearly labeling what came from retrieved text
+          versus what came from the graph - so the model (and a human
+          reviewing its answer) can tell which claims are backed by which
+          kind of evidence.
+
+  - id: agents-tools-and-evaluation
+    title: Agents, Tools, and Evaluation
+    description: Letting a model act, and knowing whether the whole system actually works.
+    lessons:
+      - id: tool-use-and-function-calling
+        title: Tool Use and Function Calling
+        estimated_minutes: 20
+        teaches: [Tool Use and Function Calling]
+        objectives:
+          - text: Describe the request/response cycle of a single tool call.
+            bloom_level: understand
+        content: |
+          Tool use lets a language model invoke external functions -
+          calling an API, running a calculation, querying a database - as
+          part of producing a response, rather than being limited to
+          whatever it can generate from its own training. The model is
+          given a set of tool definitions (name, description, and a
+          schema for its arguments); when it decides a tool call would
+          help, it emits a structured request naming the tool and its
+          arguments instead of (or alongside) plain text; your application
+          code executes that call and returns the result; the model then
+          continues, now with that result as additional context.
+
+          Good tool descriptions matter as much as good prompts - a
+          model can only use a tool well if the tool's name, description,
+          and argument schema unambiguously communicate what it does and
+          when to use it, the same way a well-named function signature
+          helps a human developer more than a vague one does.
+
+          A single request can produce several tool calls in parallel,
+          and an application typically loops - execute the requested
+          tools, feed results back, let the model decide whether it has
+          enough information or needs to call more tools - until the
+          model produces a final answer with no further tool calls
+          pending. This loop is the mechanical foundation the next lesson,
+          AI agents, builds on directly.
+
+      - id: building-ai-agents
+        title: Building AI Agents
+        estimated_minutes: 25
+        teaches: [AI Agents]
+        objectives:
+          - text: Identify when a task justifies an agent versus a single LLM call.
+            bloom_level: evaluate
+        content: |
+          An AI agent is a system where a language model plans, calls
+          tools, and iterates toward a goal across multiple steps, with
+          limited step-by-step human supervision - the tool-use loop from
+          the previous lesson, extended until a genuinely open-ended task
+          is complete rather than a single well-specified function call
+          resolved. The model decides what to do next based on the
+          results of what it already did, which is what separates an
+          agent from a fixed pipeline with a predetermined sequence of
+          steps.
+
+          This power is not free, and reaching for an agent should be a
+          deliberate choice, not a default. Four questions are worth
+          asking before building one: is the task genuinely multi-step and
+          hard to fully specify in advance; does the outcome justify the
+          extra cost and latency of multiple model calls; is the
+          underlying model actually capable at this kind of task; and can
+          errors be caught and recovered from (tests, human review,
+          rollback)? A single well-grounded RAG call often solves a
+          problem that looks, at first glance, like it needs an agent.
+
+          Where an agent is justified, retrieval and knowledge-graph
+          context remain just as important as in a single-shot RAG system
+          - an agent that can call a retrieval tool grounds its
+          intermediate reasoning steps in real content the same way a
+          single RAG answer grounds its final one, which is why AI Agents
+          in this curriculum's graph requires both tool use and RAG.
+
+      - id: evaluating-llm-systems
+        title: Evaluating LLM Systems
+        estimated_minutes: 25
+        teaches: [Evaluating LLM Systems]
+        objectives:
+          - text: Design a small eval set with a concrete grading method for a given task.
+            bloom_level: create
+        content: |
+          Shipping an LLM-powered feature without a way to measure whether
+          it's actually working is shipping blind: outputs are
+          non-deterministic, "looks fine" on a handful of manual tests
+          doesn't generalize, and a prompt change that improves one
+          example can silently regress ten others. Evaluation closes that
+          gap by turning "is this good?" into a repeatable, measurable
+          process.
+
+          A useful eval set starts from real or realistic inputs - actual
+          user questions where possible, or carefully constructed
+          representative ones otherwise - paired with a grading method:
+          exact-match or rule-based checks where the task allows it,
+          otherwise an LLM-as-judge comparing an output against a rubric
+          or a reference answer, or human review for the highest-stakes or
+          hardest-to-automate judgments. The grading method should be
+          trustworthy enough that a genuine quality improvement reliably
+          moves the score - an eval that can't detect real regressions is
+          worse than no eval, because it creates false confidence.
+
+          In a RAG or GraphRAG system specifically, it's worth evaluating
+          retrieval and generation separately: did the system retrieve the
+          right chunks and graph context at all (a retrieval-quality
+          metric), and given good context, did it produce a good, well-
+          grounded answer (a generation-quality metric)? Conflating the
+          two makes it much harder to tell whether a bad answer came from
+          missing context or from the model failing to use good context
+          well - a distinction that determines whether the fix belongs in
+          the retrieval pipeline or the prompt.

@@ -7,9 +7,10 @@ coordinates both members for a single "draft this lesson" request (see
 agents/team.py's INSTRUCTIONS).
 """
 from agno.agent import Agent
-from agno.db.sqlite import SqliteDb
 
-from ..models import build_fallback_models, build_model
+from ..storage import build_agent_db
+from ..safety import with_safety_rules
+from ..models import build_fallback_config, build_model
 from .tools import TOOLS
 
 INSTRUCTIONS = (
@@ -27,10 +28,10 @@ def build_quiz_agent() -> Agent:
     return Agent(
         name="quiz_agent",
         model=build_model(),
-        fallback_models=build_fallback_models(),
+        fallback_config=build_fallback_config(),
         tools=TOOLS,
-        instructions=INSTRUCTIONS,
+        instructions=with_safety_rules(INSTRUCTIONS),
         # Required for the requires_confirmation tool in tools.py: a paused
         # run's state lives here between the pause and resume request.
-        db=SqliteDb(db_file="tmp/educa_agent.db"),
+        db=build_agent_db(),
     )

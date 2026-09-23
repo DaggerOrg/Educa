@@ -1,6 +1,7 @@
 import { ToolCallStatus, useHumanInTheLoop } from "@copilotkit/react-core/v2";
 import type { ReactNode } from "react";
 import { findLesson } from "../App.tsx";
+import { pushToast } from "../toast.ts";
 import type { Course } from "../types.ts";
 import { IconCheck, IconClose } from "./icons.tsx";
 
@@ -87,10 +88,24 @@ function ApprovalCard({ label, status, result, respond, children }: ApprovalCard
       {status === ToolCallStatus.InProgress && <p className="hint">Drafting…</p>}
       {status === ToolCallStatus.Executing && respond && (
         <div className="hitl-card-actions">
-          <button type="button" className="btn" onClick={() => respond({ accepted: false })}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              respond({ accepted: false });
+              pushToast(`${label} rejected`, "info");
+            }}
+          >
             <IconClose /> Reject
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => respond({ accepted: true })}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              respond({ accepted: true });
+              pushToast(`${label} approved`, "success");
+            }}
+          >
             <IconCheck /> Approve
           </button>
         </div>

@@ -416,23 +416,22 @@ a{ color:inherit; text-decoration:none; }
   background:var(--success); border:2px solid var(--paper); transition:background 0.2s ease;
 }
 
-/* Identity color per agent (which agent this is) -- reuses the app's
-   existing categorical hue tokens, built for exactly this ("per-feature
-   colored icon badges", see the palette comment at the top of this file).
-   Kept as a soft tint so it reads as an accent, not a solid badge -- the
-   run-status dot/glow below layers violet on top regardless of hue. */
-.agent-wheel-icon--accent{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-soft-ink); }
-.agent-wheel-icon--success{ border-color:var(--success); background:var(--success-soft); color:var(--success-soft-ink); }
-.agent-wheel-icon--warning{ border-color:var(--warning); background:var(--warning-soft); color:var(--warning-soft-ink); }
-.agent-wheel-icon--destructive{ border-color:var(--destructive); background:var(--destructive-soft); color:var(--destructive-soft-ink); }
-.agent-wheel-icon--orange{ border-color:var(--orange); background:var(--orange-soft); color:var(--orange-soft-ink); }
+/* Identity color per agent (which agent this is) stays neutral at rest --
+   all five badges share the wheel's base grayscale styling below, so the
+   idle wheel never reads as a five-color cluster sitting on top of the
+   app's otherwise one-accent palette. The categorical hue only appears
+   once that specific agent is actually running (below), so color becomes
+   a real signal ("this one is working") instead of decoration. */
+.agent-wheel-icon--accent.is-running{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-soft-ink); }
+.agent-wheel-icon--success.is-running{ border-color:var(--success); background:var(--success-soft); color:var(--success-soft-ink); }
+.agent-wheel-icon--warning.is-running{ border-color:var(--warning); background:var(--warning-soft); color:var(--warning-soft-ink); }
+.agent-wheel-icon--destructive.is-running{ border-color:var(--destructive); background:var(--destructive-soft); color:var(--destructive-soft-ink); }
+.agent-wheel-icon--orange.is-running{ border-color:var(--orange); background:var(--orange-soft); color:var(--orange-soft-ink); }
 
-/* Run status (is this agent's context actually working right now) -- always
-   violet, regardless of the identity hue above, so "active" never blends
-   into an agent's own idle color. Wins on specificity (two classes) over
-   the single-class hue rules. */
-.agent-wheel-icon.is-running{ border-color:var(--violet); color:var(--ink); }
-.agent-wheel-icon.is-running::after{ background:var(--violet); box-shadow:0 0 6px 1px var(--violet); }
+/* Run status glow/status-dot: reuses each badge's own identity hue (set by
+   the paired rules above) rather than a separate always-violet color, now
+   that idle badges carry no color of their own to blend into. */
+.agent-wheel-icon.is-running::after{ background:currentColor; box-shadow:0 0 6px 1px currentColor; }
 .agent-wheel-icon.is-running{
   animation: agent-wheel-spin var(--wheel-duration) linear infinite reverse, agent-wheel-glow 1.6s ease-in-out infinite;
 }
@@ -440,12 +439,16 @@ a{ color:inherit; text-decoration:none; }
 @keyframes agent-wheel-spin{ to{ transform:rotate(360deg); } }
 @keyframes agent-wheel-glow{
   0%,100%{ box-shadow:var(--shadow), 0 0 0 0 transparent; }
-  50%{ box-shadow:var(--shadow), 0 0 14px 4px var(--violet-glow); }
+  50%{ box-shadow:var(--shadow), 0 0 14px 4px currentColor; }
 }
 
 /* Ask AI: past-conversations list + read-only transcript, toggled via the
    clock icon in .chat-drawer-head-actions (see App.tsx). */
-.chat-history{ overflow-y:auto; padding:0.6rem; display:flex; flex-direction:column; }
+/* Shared between the narrow .chat-drawer and Home's full-width chat surface
+   (see home-chat-head-actions above) -- the max-width keeps the list/
+   transcript readable instead of stretching thin across a wide page; it's a
+   no-op inside the drawer, which is already narrower than this. */
+.chat-history{ overflow-y:auto; padding:0.6rem; display:flex; flex-direction:column; max-width:640px; width:100%; margin:0 auto; }
 .chat-history-empty{ padding:1rem 0.6rem; }
 .chat-history-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.2rem; }
 .chat-history-item{
@@ -590,6 +593,13 @@ a{ color:inherit; text-decoration:none; }
 .creative-card-meta{ font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .creative-preview-badge{ background:var(--warning-soft); color:var(--warning-soft-ink); white-space:normal; text-align:left; }
 
+/* Home, landing state: the "What will you build today?" heading gets a
+   small history entry point of its own (reusing .chat-drawer-icon-btn) --
+   otherwise a teacher who hasn't sent a message yet this visit has no way
+   to reach past conversations from Home at all. */
+.home-prompt-head{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; margin-bottom:1rem; }
+.home-prompt-head h2{ margin-bottom:0; }
+
 /* Home, mid-conversation: describing a course on Home turns the same main
    stage into a full ChatGPT-style thread (Home.tsx's `chatStarted`) instead
    of navigating to Course builder or opening the .chat-drawer side panel --
@@ -601,6 +611,7 @@ a{ color:inherit; text-decoration:none; }
   display:flex; align-items:center; gap:0.7rem; padding:0.9rem 1.4rem; border-bottom:1px solid var(--rule);
   font-family:'Inter',sans-serif; font-weight:800; font-size:0.95rem; flex-shrink:0;
 }
+.home-chat-head-actions{ margin-left:auto; }
 .home-chat-back{
   border:1px solid var(--rule); border-radius:8px; background:transparent; color:var(--ink-soft); cursor:pointer;
   width:30px; height:30px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
@@ -1020,3 +1031,168 @@ button.account-modal-row:hover{ background:var(--paper-sunken); }
 .toast-close:hover{ color:var(--ink); }
 @keyframes toast-in{ from{ opacity:0; transform:translateX(16px); } to{ opacity:1; transform:translateX(0); } }
 @media (prefers-reduced-motion: reduce){ .toast{ animation:none; } }
+
+/* ---- Student notes panel (notes/NotesPanel.tsx) ------------------------
+   A non-modal panel on the right so the lesson stays readable while the
+   student types. On wide screens the lesson column makes room for it. */
+.lesson-view-actions{ display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+.btn.is-active{ background:var(--accent-soft); border-color:var(--accent-soft); color:var(--accent-soft-ink); }
+@media (min-width:1280px){ .educa-page.has-notes{ margin-left:1.5rem; margin-right:calc(460px + 1.5rem); } }
+
+.notes-panel{
+  position:fixed; top:0; right:0; bottom:0; width:460px; max-width:100vw; z-index:20;
+  background:var(--paper-raised); border-left:1px solid var(--rule); box-shadow:var(--shadow);
+  display:flex; flex-direction:column; min-height:0;
+}
+.notes-panel-head{ display:flex; align-items:center; justify-content:space-between; gap:0.6rem; padding:0.7rem 1rem; border-bottom:1px solid var(--rule); flex-wrap:wrap; }
+.notes-panel-title{ font-weight:800; font-size:0.95rem; }
+.notes-panel-head-actions{ display:flex; align-items:center; gap:0.5rem; }
+.notes-save-state{ font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); min-width:5.5rem; text-align:right; }
+.notes-ai-toggle{
+  display:inline-flex; align-items:center; gap:0.35rem; border:1px solid var(--rule); border-radius:999px; background:var(--paper);
+  color:var(--ink-soft); font-family:'JetBrains Mono',monospace; font-size:0.66rem; letter-spacing:0.05em; text-transform:uppercase;
+  padding:0.3rem 0.65rem; cursor:pointer; white-space:nowrap;
+}
+.notes-ai-toggle svg{ width:12px; height:12px; }
+.notes-ai-toggle.is-on{ background:var(--accent-soft); border-color:var(--accent-soft); color:var(--accent-soft-ink); }
+
+.notes-tabs{ display:flex; gap:0.25rem; padding:0.5rem 1rem 0; border-bottom:1px solid var(--rule); }
+.notes-tab{
+  border:none; background:transparent; cursor:pointer; color:var(--ink-soft); font-weight:600; font-size:0.85rem;
+  padding:0.45rem 0.7rem; border-bottom:2px solid transparent; margin-bottom:-1px;
+}
+.notes-tab:hover{ color:var(--ink); }
+.notes-tab.is-active{ color:var(--ink); border-bottom-color:var(--accent); }
+
+.notes-panel-body{ flex:1; min-height:0; display:flex; flex-direction:column; padding:0.8rem 1rem 1rem; }
+.notes-pane{ flex:1; min-height:0; overflow-y:auto; }
+.notes-pane[hidden]{ display:none; }
+
+.notes-editor-wrap{ position:relative; }
+.notes-toolbar{ display:flex; gap:0.25rem; margin-bottom:0.5rem; }
+.notes-tool{
+  min-width:28px; height:28px; border:1px solid var(--rule); border-radius:8px; background:var(--paper); color:var(--ink-soft);
+  font-weight:700; font-size:0.8rem; cursor:pointer;
+}
+.notes-tool:hover{ color:var(--ink); }
+.notes-tool.is-active{ background:var(--accent-soft); border-color:var(--accent-soft); color:var(--accent-soft-ink); }
+.notes-editor .notes-prose{
+  min-height:320px; border:1px solid var(--rule); border-radius:12px; background:var(--paper); padding:0.8rem 1rem; outline:none;
+  font-size:0.92rem; line-height:1.6;
+}
+.notes-editor .notes-prose:focus{ border-color:var(--accent); }
+.notes-prose h1, .notes-prose h2, .notes-prose h3{ margin:0.9rem 0 0.35rem; font-size:1.05rem; }
+.notes-prose h1:first-child, .notes-prose h2:first-child, .notes-prose h3:first-child{ margin-top:0; }
+.notes-prose p{ margin:0 0 0.5rem; }
+.notes-prose ul, .notes-prose ol{ margin:0 0 0.6rem; padding-left:1.3rem; }
+.notes-prose p.is-editor-empty:first-child::before{
+  content:attr(data-placeholder); color:var(--ink-faint); float:left; height:0; pointer-events:none;
+}
+
+.notes-suggest{
+  position:absolute; left:0.5rem; right:0.5rem; z-index:2; background:var(--paper-raised); border:1px solid var(--accent);
+  border-radius:12px; box-shadow:var(--shadow); padding:0.75rem 0.9rem; font-size:0.86rem;
+}
+.notes-suggest svg{ width:13px; height:13px; flex-shrink:0; }
+.notes-suggest--loading{ display:flex; align-items:center; gap:0.4rem; color:var(--ink-soft); }
+.notes-suggest-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:0.6rem; margin-bottom:0.4rem; }
+.notes-suggest-title{ display:inline-flex; align-items:center; gap:0.4rem; font-weight:700; }
+.notes-suggest-summary{ margin:0 0 0.4rem; color:var(--ink-soft); }
+.notes-suggest-points{ margin:0 0 0.4rem; padding-left:1.1rem; }
+.notes-suggest-example{ margin:0 0 0.6rem; color:var(--ink-soft); }
+.notes-suggest-actions{ display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+.notes-suggest-keys{ font-family:'JetBrains Mono',monospace; font-size:0.64rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
+.notes-ai-note{ margin:0.5rem 0 0; color:var(--ink-faint); font-size:0.8rem; }
+
+.notes-sketch{ height:100%; min-height:420px; border:1px solid var(--rule); border-radius:12px; overflow:hidden; }
+
+.notes-helpers{ display:flex; flex-direction:column; gap:0.8rem; }
+.notes-helper-list{ display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+.notes-helper-card{
+  text-align:left; border:1px solid var(--rule); border-radius:12px; background:var(--paper); padding:0.6rem 0.7rem; cursor:pointer;
+  display:flex; flex-direction:column; gap:0.25rem; color:var(--ink);
+}
+.notes-helper-card strong{ display:inline-flex; align-items:center; gap:0.35rem; font-size:0.85rem; }
+.notes-helper-card strong svg{ width:12px; height:12px; color:var(--accent); }
+.notes-helper-card span{ font-size:0.76rem; color:var(--ink-soft); }
+.notes-helper-card.is-active{ border-color:var(--accent); background:var(--accent-soft); }
+.notes-helper-form{ display:flex; flex-direction:column; gap:0.4rem; align-items:flex-start; }
+.notes-helper-form .auth-input{ width:100%; resize:vertical; font-family:inherit; }
+.notes-helper-result{ display:flex; flex-direction:column; gap:0.6rem; align-items:flex-start; border:1px solid var(--rule); border-radius:12px; padding:0.8rem 0.9rem; background:var(--paper); width:100%; }
+.notes-result-block{ font-size:0.88rem; width:100%; }
+.notes-result-block p{ margin:0 0 0.5rem; }
+.notes-result-block ul{ margin:0 0 0.5rem; padding-left:1.1rem; }
+.notes-quiz-q{ border:none; padding:0; margin:0 0 0.8rem; }
+.notes-quiz-q legend{ font-weight:700; margin-bottom:0.4rem; padding:0; }
+.notes-quiz-option{
+  display:block; width:100%; text-align:left; border:1px solid var(--rule); border-radius:8px; background:var(--paper-raised);
+  color:var(--ink); padding:0.45rem 0.7rem; margin-bottom:0.3rem; cursor:pointer; font-size:0.85rem;
+}
+.notes-quiz-option:disabled{ cursor:default; }
+.notes-quiz-option.is-correct{ background:var(--done); border-color:var(--done); color:var(--done-ink); }
+.notes-quiz-option.is-wrong{ background:var(--destructive-soft); border-color:var(--destructive-soft); color:var(--destructive-soft-ink); }
+.notes-cards{ display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; width:100%; }
+.notes-card{
+  min-height:110px; text-align:left; border:1px solid var(--rule); border-radius:12px; background:var(--paper-raised);
+  color:var(--ink); padding:0.7rem 0.8rem; cursor:pointer; font-size:0.86rem; display:flex; flex-direction:column; gap:0.35rem;
+}
+.notes-card:hover{ border-color:var(--accent); }
+
+@media (max-width:640px){
+  .notes-panel{ width:100vw; }
+  .notes-helper-list, .notes-cards{ grid-template-columns:1fr; }
+}
+
+/* ---- Module story videos (story/*) -------------------------------------
+   Teacher editor + a tall "story" card for playback. */
+.week-head-row{ display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+.week-head-row .week-head{ flex:1; width:auto; margin-bottom:0; }
+.week-story-btn{ padding:0.25rem 0.6rem; font-size:0.78rem; }
+.week-story-btn svg{ width:13px; height:13px; }
+.week-head .week-story-btn{ margin-left:auto; text-transform:none; letter-spacing:0; font-family:inherit; color:var(--ink); }
+
+.story-editor{ max-height:calc(100vh - 3rem); overflow-y:auto; }
+.story-intro{ display:flex; flex-direction:column; gap:0.5rem; align-items:flex-start; }
+.story-intro .auth-input{ width:100%; }
+.story-status-row{ display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem; }
+.story-fields{ border:none; padding:0; margin:0 0 0.8rem; min-width:0; display:flex; flex-direction:column; gap:0.3rem; }
+.story-fields .auth-input{ width:100%; font-family:inherit; }
+.story-fields textarea.auth-input{ resize:vertical; }
+.story-scene{ border:1px solid var(--rule); border-radius:12px; padding:0.7rem 0.8rem; margin-top:0.4rem; display:flex; flex-direction:column; gap:0.3rem; background:var(--paper); }
+.story-scene-head{ display:flex; align-items:center; justify-content:space-between; }
+.story-scene-head .field-label{ margin-bottom:0; }
+.story-scene-head .btn{ padding:0.15rem 0.35rem; }
+.story-scene-row{ display:grid; grid-template-columns:1fr 96px; gap:0.5rem; }
+.story-actions{ display:flex; flex-wrap:wrap; gap:0.5rem; }
+
+.story-backdrop{ z-index:40; }
+.story-card{
+  width:100%; max-width:380px; max-height:calc(100vh - 3rem); overflow-y:auto; background:var(--paper-raised);
+  border:1px solid var(--rule); border-radius:12px; box-shadow:var(--shadow); padding:0.8rem 1rem 1rem;
+  display:flex; flex-direction:column; gap:0.8rem;
+}
+.story-progress{ display:flex; gap:4px; }
+.story-seg{ flex:1; height:3px; border-radius:2px; background:var(--paper-sunken); overflow:hidden; position:relative; }
+.story-seg-fill{ position:absolute; inset:0; background:var(--accent); transform-origin:left; }
+.story-seg-fill.is-current{ animation:story-seg linear forwards; }
+@keyframes story-seg{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+.story-head{ display:flex; align-items:center; gap:0.6rem; }
+.story-avatar{
+  width:34px; height:34px; border-radius:50%; background:var(--accent-soft); color:var(--accent-soft-ink);
+  display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;
+}
+.story-head-text{ flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.25; font-size:0.85rem; }
+.story-head-text span{ color:var(--ink-soft); font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.story-stage{
+  min-height:250px; border-radius:12px; background:var(--paper-sunken); padding:1.2rem 1.1rem;
+  display:flex; flex-direction:column; justify-content:center; gap:0.8rem; text-align:center;
+}
+.story-visual{ margin:0; display:flex; align-items:center; justify-content:center; gap:0.4rem; color:var(--ink-soft); font-size:0.8rem; font-style:italic; }
+.story-visual svg{ width:13px; height:13px; flex-shrink:0; color:var(--accent); }
+.story-caption{ margin:0; font-size:1.3rem; font-weight:800; letter-spacing:-0.01em; line-height:1.25; }
+.story-stage--intro .story-caption{ font-size:1.5rem; }
+.story-narration{ margin:0; font-size:0.92rem; color:var(--ink); min-height:3em; }
+.story-controls{ display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; }
+.story-note{ margin:0; font-size:0.76rem; }
+.story-video{ width:100%; border-radius:12px; background:var(--paper-sunken); max-height:60vh; }
+@media (prefers-reduced-motion: reduce){ .story-seg-fill.is-current{ animation-duration:0.01s !important; } }

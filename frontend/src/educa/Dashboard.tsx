@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchMyEnrolledCourses, listMyCourses } from "../api.ts";
 import type { Session } from "../auth.ts";
 import type { Course, CoursePreview } from "../types.ts";
+import { getCompletedLessonIds, getRoster } from "./traditionalData.ts";
 
 interface DashboardProps {
   session: Session;
@@ -45,13 +46,30 @@ export default function Dashboard({ session }: DashboardProps) {
         </div>
       ) : (
         <div className="course-card-grid">
-          {courses.map((c) => (
-            <Link to={`/educa/courses/${c.id}`} className="course-card" key={c.id}>
-              <h3>{c.title}</h3>
-              <p className="course-card-audience">{c.audience}</p>
-              <span className="hint-inline">{lessonCount(c.weeks)} lesson(s){isTeacher ? "" : " published"}</span>
-            </Link>
-          ))}
+          {courses.map((c) => {
+            const total = lessonCount(c.weeks);
+            const done = isTeacher
+              ? 0
+              : c.weeks.reduce((n, w) => {
+                  const completed = getCompletedLessonIds(session.user.id, c.id);
+                  return n + w.lessons.filter((l) => completed.has(l.id)).length;
+                }, 0);
+            return (
+              <Link to={`/educa/courses/${c.id}`} className="course-card" key={c.id}>
+                <h3>{c.title}</h3>
+                <p className="course-card-audience">{c.audience}</p>
+                <span className="hint-inline">
+                  {total} lesson(s){isTeacher ? "" : " published"}
+                  {isTeacher && ` · ${getRoster(c.id).length} enrolled`}
+                </span>
+                {!isTeacher && total > 0 && (
+                  <div className="progress-bar progress-bar-sm">
+                    <div className="progress-bar-fill" style={{ width: `${Math.round((done / total) * 100)}%` }} />
+                  </div>
+                )}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -7,10 +7,19 @@ both the AGUI router and the plain REST routers in main.py) runs first and
 populates this before any tool call happens, so ownership checks in
 store.py can trust it instead of trusting a course/lesson id the model
 supplies for addressing.
+
+`set_current_user` also stamps `request.state.user_id` -- Agno's own AGUI
+router reads exactly that (see its `resolve_run_user_id`, precedence #2:
+"any other authenticated caller ... is pinned to request.state.user_id")
+to attribute a chat session to its owner. Without this, every AG-UI
+session lands with `user_id=NULL` ("unowned" per Agno's own ownership
+predicate) and nothing lets a teacher later find their own past
+conversations -- see chat_history.py, which lists sessions by this exact
+column.
 """
 from contextvars import ContextVar
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 
 from .routes import get_current_user
 
@@ -24,7 +33,7 @@ def current_user_id() -> str:
     return user_id
 
 
-async def set_current_user(user: dict = Depends(get_current_user)) -> dict:
+async def set_current_user(request: Request, user: dict = Depends(get_current_user)) -> dict:
     # Must be `async def`, not `def` -- FastAPI runs sync dependencies in a
     # threadpool, and a ContextVar.set() made in a worker thread does not
     # reliably propagate back to the request's own asyncio Task. An async
@@ -32,6 +41,7 @@ async def set_current_user(user: dict = Depends(get_current_user)) -> dict:
     # everything the route handler awaits afterwards, including deep inside
     # Agno's tool execution -- see this module's docstring.
     _current_user_id.set(user["id"])
+    request.state.user_id = user["id"]
     return user
 
 

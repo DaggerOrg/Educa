@@ -1,0 +1,111 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment to deploy
+        required: true
+        type: choice
+        options: [development, staging, production]
+      ref:
+        description: Commit, branch, or tag to deploy
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-${{ inputs.environment || 'development' }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}/educa-backend
+
+jobs:
+  target:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.target.outputs.environment }}
+      ref: ${{ steps.target.outputs.ref }}
+    steps:
+      - id: target
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_REF: ${{ inputs.ref }}
+          SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "environment=development" >> "$GITHUB_OUTPUT"
+            echo "ref=$SHA" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=$INPUT_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+            echo "ref=$INPUT_REF" >> "$GITHUB_OUTPUT"
+          fi
+
+  image:
+    needs: target
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.target.outputs.ref }}
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ github.sha }}
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+  deploy:
+    needs: [target, image]
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.target.outputs.environment }}
+    steps:
+      - name: Require target deployment webhook
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+        run: test -n "$DEPLOY_WEBHOOK_URL"
+      - name: Promote immutable image
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          ENVIRONMENT: ${{ needs.target.outputs.environment }}
+          IMAGE: ${{ env.IMAGE }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+          REVISION: ${{ github.sha }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 3 --retry-all-errors \
+            --max-time 30 -X POST "$DEPLOY_WEBHOOK_URL" \
+            -H 'content-type: application/json' \
+            -d "$(jq -n \
+              --arg environment "$ENVIRONMENT" \
+              --arg image "$IMAGE" \
+              --arg digest "$DIGEST" \
+              --arg revision "$REVISION" \
+              '{environment: $environment, image: $image, digest: $digest, revision: $revision}')"

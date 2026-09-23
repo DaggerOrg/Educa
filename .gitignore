@@ -5,14 +5,38 @@ backend/__pycache__/
 backend/**/__pycache__/
 backend/.env
 backend/tmp/
+backend/rag/samples/
 
 ### Frontend (Node)
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+frontend/playwright-report/
+frontend/test-results/
 
 ### Website (Node)
 website/node_modules/
 website/dist/
+
+### ai-lab (Python)
+ai-lab/.venv/
+ai-lab/venv/
+ai-lab/__pycache__/
+ai-lab/**/__pycache__/
+ai-lab/.env
+ai-lab/chroma_db/
+ai-lab/**/*.egg-info/
+
+### ai-lab/curriculum_knowledge_engine (Python, nested project)
+ai-lab/curriculum_knowledge_engine/.venv/
+ai-lab/curriculum_knowledge_engine/var/
+ai-lab/curriculum_knowledge_engine/.env
+ai-lab/curriculum_knowledge_engine/.pytest_cache/
+
+### duan-demo (Python + TypeScript, standalone demo)
+duan-demo/backend/.venv/
+duan-demo/backend/__pycache__/
+duan-demo/backend/**/__pycache__/
+duan-demo/frontend/node_modules/
 
 .DS_Store

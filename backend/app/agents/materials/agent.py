@@ -10,10 +10,11 @@ routed through the agent -- a reference document isn't a creative AI
 action that needs a teacher's sign-off.
 """
 from agno.agent import Agent
-from agno.db.sqlite import SqliteDb
 
 from ... import knowledge as kb
-from ..models import build_fallback_models, build_model
+from ..storage import build_agent_db
+from ..safety import with_safety_rules
+from ..models import build_fallback_config, build_model
 
 INSTRUCTIONS = (
     "You manage the teacher's uploaded course materials. Use "
@@ -26,8 +27,8 @@ def build_materials_agent() -> Agent:
     return Agent(
         name="materials_agent",
         model=build_model(),
-        fallback_models=build_fallback_models(),
+        fallback_config=build_fallback_config(),
         knowledge=kb.knowledge,
-        instructions=INSTRUCTIONS,
-        db=SqliteDb(db_file="tmp/educa_agent.db"),
+        instructions=with_safety_rules(INSTRUCTIONS),
+        db=build_agent_db(),
     )

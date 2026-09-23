@@ -8,9 +8,10 @@ speaks AG-UI straight to the React frontend. See the project README for
 the earlier LangGraph-based version this replaces and why.
 """
 from agno.agent import Agent
-from agno.db.sqlite import SqliteDb
 
-from ..models import build_fallback_models, build_model
+from ..storage import build_agent_db
+from ..safety import with_safety_rules
+from ..models import build_fallback_config, build_model
 from .tools import TOOLS
 
 INSTRUCTIONS = (
@@ -38,11 +39,11 @@ def build_curriculum_agent() -> Agent:
         # Free-tier Gemini occasionally returns 503 UNAVAILABLE under load --
         # Agno retries the same failed run against these in order instead of
         # surfacing the error to the teacher.
-        fallback_models=build_fallback_models(),
+        fallback_config=build_fallback_config(),
         tools=TOOLS,
-        instructions=INSTRUCTIONS,
+        instructions=with_safety_rules(INSTRUCTIONS),
         # Required for the two requires_confirmation tools in tools.py: a
         # paused run's requirements live here between the pause request and
         # the resume request, not just in memory (see tools.py docstring).
-        db=SqliteDb(db_file="tmp/educa_agent.db"),
+        db=build_agent_db(),
     )

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUAN — DNA Matching Engine (Demo)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">DUAN</div>
+    <div class="tagline">DNA &amp; Astrological Jewelry — Engineering Demo</div>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h1>DNA-to-Gemstone Matching Pipeline</h1>
+      <p>
+        Enter a profile to run the full pipeline: synthetic sample intake,
+        variant analysis, astrological calculation, and gemstone matching.
+      </p>
+    </section>
+
+    <section class="form-card">
+      <form id="match-form">
+        <label>
+          Full Name
+          <input type="text" id="name" required placeholder="Jane Doe" />
+        </label>
+        <label>
+          Birth Date
+          <input type="date" id="birth_date" required />
+        </label>
+        <label>
+          Birth Time <span class="optional">(optional)</span>
+          <input type="time" id="birth_time" />
+        </label>
+        <label>
+          Birth City <span class="optional">(optional)</span>
+          <input type="text" id="birth_city" placeholder="Yangon, Myanmar" />
+        </label>
+        <button type="submit" id="submit-btn">Run Matching Pipeline</button>
+      </form>
+    </section>
+
+    <section class="pipeline-stepper" id="stepper" hidden>
+      <div class="step" data-step="1"><span class="dot"></span>Sample Intake</div>
+      <div class="step" data-step="2"><span class="dot"></span>Variant Analysis</div>
+      <div class="step" data-step="3"><span class="dot"></span>Astrological Calc</div>
+      <div class="step" data-step="4"><span class="dot"></span>Matching Engine</div>
+      <div class="step" data-step="5"><span class="dot"></span>Results</div>
+    </section>
+
+    <section class="results" id="results" hidden>
+      <div class="result-grid">
+        <div class="card profile-card">
+          <h2>Synthetic Genetic Profile</h2>
+          <ul id="markers-list"></ul>
+        </div>
+        <div class="card astrology-card">
+          <h2>Astrological Profile</h2>
+          <div id="astrology-detail"></div>
+        </div>
+        <div class="card traits-card">
+          <h2>Simulated Trait Indices</h2>
+          <div id="traits-bars"></div>
+        </div>
+      </div>
+
+      <h2 class="matches-title">Recommended Gemstones</h2>
+      <div class="matches-grid" id="matches-grid"></div>
+
+      <p class="disclaimer" id="disclaimer"></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

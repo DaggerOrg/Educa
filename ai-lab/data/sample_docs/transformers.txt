@@ -1,0 +1,15 @@
+Transformers are a neural network architecture introduced in the 2017 paper
+"Attention Is All You Need". Unlike recurrent networks, transformers process
+an entire sequence in parallel using a mechanism called self-attention, which
+lets every token in the input look at every other token and learn how much
+to weight it when building its own representation.
+
+A transformer block is made of two sub-layers: multi-head self-attention,
+followed by a position-wise feed-forward network, each wrapped with a
+residual connection and layer normalization. Stacking many of these blocks
+lets the model build up increasingly abstract representations of the input.
+
+Transformers are the architecture behind modern large language models
+(LLMs) such as the Claude and GPT model families. Their ability to run in
+parallel on GPUs, rather than sequentially like RNNs, is a major reason they
+scale so well to huge datasets and huge parameter counts.

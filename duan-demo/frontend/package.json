@@ -1,0 +1,12 @@
+{
+  "name": "duan-demo-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  }
+}

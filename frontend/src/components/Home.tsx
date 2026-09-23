@@ -2,8 +2,10 @@ import { CopilotChat, useCopilotKit, useAgent } from "@copilotkit/react-core/v2"
 import { useState } from "react";
 import { formatPrice } from "../format.ts";
 import { STARTER_SUGGESTIONS } from "../starterSuggestions.ts";
+import { useTheme } from "../theme.ts";
 import type { Course, Listing } from "../types.ts";
-import { IconArrowLeft, IconPlus, IconTag } from "./icons.tsx";
+import ChatHistoryPanel from "./ChatHistoryPanel.tsx";
+import { IconArrowLeft, IconClock, IconPlus, IconTag } from "./icons.tsx";
 import RoutinePanel from "./RoutinePanel.tsx";
 
 interface HomeProps {
@@ -20,6 +22,13 @@ export default function Home({ courses, listings, onOpenCourse, onNewCourse, onS
   const [prompt, setPrompt] = useState("");
   const [sending, setSending] = useState(false);
   const [chatStarted, setChatStarted] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // A fresh id per "conversation" on Home -- same convention as App.tsx's
+  // chat drawer (`chatThreadId`), so a teacher can browse past Home
+  // conversations and jump back into one, not just whatever thread happened
+  // to be live when they last left this page.
+  const [threadId, setThreadId] = useState<string>(() => crypto.randomUUID());
+  const theme = useTheme();
   const { agent } = useAgent({ agentId: "curriculum_team" });
   const { copilotkit } = useCopilotKit();
 
@@ -30,11 +39,20 @@ export default function Home({ courses, listings, onOpenCourse, onNewCourse, onS
     if (!message || sending) return;
     setSending(true);
     onStartChat();
-    // Flip to the chat view immediately on submit, before the agent replies --
-    // this is the "turns into a ChatGPT-style conversation" moment, not
-    // something that waits on the first response.
-    setChatStarted(true);
+    // `agent` is the one shared "curriculum_team" instance. Connect it to
+    // this Home conversation's thread and queue the message *before*
+    // mounting <CopilotChat threadId={threadId}> below (via setChatStarted)
+    // -- mounting first races this against CopilotChat's own connect-on-
+    // mount effect, which resets local messages for a thread it hasn't
+    // seen yet, and would silently wipe the just-typed message if it ran
+    // after addMessage but before runAgent read it.
+    agent.threadId = threadId;
+    await copilotkit.connectAgent({ agent });
     agent.addMessage({ id: crypto.randomUUID(), role: "user", content: message });
+    // Flip to the chat view now, before the agent replies -- the "turns
+    // into a ChatGPT-style conversation" moment shouldn't wait on the full
+    // response, just on the (fast, local) connect above.
+    setChatStarted(true);
     try {
       await copilotkit.runAgent({ agent });
     } finally {
@@ -42,29 +60,71 @@ export default function Home({ courses, listings, onOpenCourse, onNewCourse, onS
     }
   }
 
-  if (chatStarted) {
+  function startNewConversation() {
+    setThreadId(crypto.randomUUID());
+    setHistoryOpen(false);
+    setChatStarted(false);
+  }
+
+  if (chatStarted || historyOpen) {
     return (
       <div className="home-hub is-chat">
-        {/* `dark` -- same convention App.tsx's .chat-drawer uses: CopilotKit
-            v2's stylesheet keys its dark palette off a literal `.dark`
-            ancestor class, so without it CopilotChat renders light
-            regardless of Studio's own black palette. */}
-        <div className="home-chat dark">
+        {/* `dark` only under Studio's own dark theme -- CopilotKit v2's
+            stylesheet keys its dark palette off a literal `.dark` ancestor
+            class, so it must track the app's real theme, not always be on
+            (that was the "chat is black in light mode" bug, fixed here the
+            same way as App.tsx's .chat-drawer). */}
+        <div className={`home-chat${theme === "dark" ? " dark" : ""}`}>
           <div className="home-chat-head">
             <button
               type="button"
               className="home-chat-back"
-              onClick={() => setChatStarted(false)}
+              onClick={() => {
+                setChatStarted(false);
+                setHistoryOpen(false);
+              }}
               aria-label="Back to Home"
             >
               <IconArrowLeft />
             </button>
-            <span>Ask AI</span>
+            <span>{historyOpen ? "Past conversations" : "Ask AI"}</span>
+            <div className="chat-drawer-head-actions home-chat-head-actions">
+              {!historyOpen && (
+                <button
+                  type="button"
+                  className="chat-drawer-icon-btn"
+                  onClick={startNewConversation}
+                  title="New conversation"
+                  aria-label="Start a new conversation"
+                >
+                  <IconPlus />
+                </button>
+              )}
+              <button
+                type="button"
+                className={`chat-drawer-icon-btn${historyOpen ? " is-active" : ""}`}
+                onClick={() => setHistoryOpen((v) => !v)}
+                title={historyOpen ? "Back to chat" : "Past conversations"}
+                aria-label={historyOpen ? "Back to chat" : "Past conversations"}
+              >
+                <IconClock />
+              </button>
+            </div>
           </div>
-          {/* v2's CopilotChat has no `instructions` prop -- that was a silent
-              no-op in the pre-TS JS version. The agent's real instructions
-              live server-side in backend/app/agents/curriculum/agent.py. */}
-          <CopilotChat agentId="curriculum_team" />
+          {historyOpen ? (
+            <ChatHistoryPanel
+              onResume={(sessionId) => {
+                setThreadId(sessionId);
+                setHistoryOpen(false);
+                setChatStarted(true);
+              }}
+            />
+          ) : (
+            // v2's CopilotChat has no `instructions` prop -- that was a silent
+            // no-op in the pre-TS JS version. The agent's real instructions
+            // live server-side in backend/app/agents/curriculum/agent.py.
+            <CopilotChat key={threadId} agentId="curriculum_team" threadId={threadId} />
+          )}
         </div>
       </div>
     );
@@ -73,7 +133,18 @@ export default function Home({ courses, listings, onOpenCourse, onNewCourse, onS
   return (
     <div className="home-hub">
       <div className="home-prompt-section">
-        <h2>What will you build today?</h2>
+        <div className="home-prompt-head">
+          <h2>What will you build today?</h2>
+          <button
+            type="button"
+            className="chat-drawer-icon-btn"
+            onClick={() => setHistoryOpen(true)}
+            title="Past conversations"
+            aria-label="Past conversations"
+          >
+            <IconClock />
+          </button>
+        </div>
         <form
           className="home-prompt-form"
           onSubmit={(e) => {

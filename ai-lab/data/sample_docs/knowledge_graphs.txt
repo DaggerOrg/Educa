@@ -1,0 +1,20 @@
+A knowledge graph represents information as a set of entities (nodes) and
+the typed relationships between them (edges) - for example, "RAG" --depends
+on--> "Vector Database", or "Transformer" --uses--> "Self-Attention".
+Unlike a vector store, which only knows that two chunks of text are
+semantically similar, a graph can represent precise, structured
+relationships and support multi-hop reasoning such as "what does X depend
+on, and what does that depend on".
+
+Knowledge graphs are commonly built and queried with graph databases such
+as Neo4j, or, for smaller and simpler cases, with in-memory graph
+libraries such as Python's NetworkX, which represents a graph as nodes and
+edges in memory and provides algorithms for traversal (breadth-first and
+depth-first search), shortest paths, and centrality measures that identify
+the most "important" or well-connected nodes in the graph.
+
+Combining a knowledge graph with a vector store - sometimes called
+GraphRAG - lets a system answer questions that need both structured,
+multi-hop relationships (from the graph) and rich unstructured supporting
+detail (from the vector store), by retrieving from both and passing the
+combined context to the language model.

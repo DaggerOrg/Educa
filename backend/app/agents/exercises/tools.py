@@ -14,6 +14,7 @@ from agno.tools import tool
 from pydantic import BaseModel, model_validator
 
 from ... import store
+from ... import audit
 from ...auth.context import current_user_id
 
 logger = logging.getLogger(__name__)
@@ -66,6 +67,7 @@ def generate_lesson_exercises(lesson_id: str, exercises: List[ExerciseDraft]) ->
         logger.error("generate_lesson_exercises: no lesson with id %s", lesson_id)
         raise ValueError(f"No lesson with id {lesson_id}")
     logger.info("generate_lesson_exercises: saved %d exercise(s) for lesson %s", len(exercises), lesson_id)
+    audit.record("generate_lesson_exercises", lesson_id, f"Generated {len(exercises)} exercise(s)")
     return lesson
 
 

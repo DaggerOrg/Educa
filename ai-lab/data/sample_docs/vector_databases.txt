@@ -1,0 +1,20 @@
+A vector database stores embeddings - dense numeric vectors that represent
+the meaning of a piece of text, image, or other data - and lets you search
+for the vectors that are closest to a query vector, usually by cosine
+similarity or Euclidean distance. This is called nearest-neighbor search.
+
+Because semantically similar content ends up close together in vector
+space, nearest-neighbor search over embeddings finds content that is
+conceptually related to a query even when it does not share any exact
+keywords with it. This is the core capability that RAG systems rely on.
+
+Chroma is an open-source embedding database that can run fully locally,
+either in-memory or persisted to disk, which makes it a convenient choice
+for prototyping RAG pipelines before moving to a managed or
+horizontally-scaled vector database such as Pinecone, Weaviate, Qdrant, or
+pgvector (a Postgres extension) in production.
+
+Most vector databases also support metadata filtering, so a query can be
+restricted to, for example, only chunks from a specific document or only
+chunks tagged with a specific topic, before or after the similarity search
+runs.

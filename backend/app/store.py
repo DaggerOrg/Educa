@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from .db import SessionLocal
-from .models_db import Course, Enrollment, Lesson, LessonExercise, Module, Quiz, QuizAttempt, QuizItem, Response
+from .models_db import Course, Enrollment, Lesson, LessonExercise, Module, Quiz, QuizAttempt, QuizItem, Response, User
 
 _COURSE_LOAD = selectinload(Course.modules).selectinload(Module.lessons).options(
     selectinload(Lesson.quizzes).selectinload(Quiz.items),
@@ -73,6 +73,7 @@ def _serialize_course_preview(course: Course) -> dict:
         "audience": course.audience,
         "weeks": [
             {
+                "moduleId": m.id,
                 "week": m.week_number,
                 "title": m.title,
                 "lessons": [
@@ -92,6 +93,7 @@ def _serialize_course(course: Course) -> dict:
         "audience": course.audience,
         "weeks": [
             {
+                "moduleId": m.id,
                 "week": m.week_number,
                 "title": m.title,
                 "lessons": [_serialize_lesson(l) for l in m.lessons],
@@ -402,6 +404,63 @@ def list_attempts_for_student(lesson_id: str, student_id: str) -> list[dict]:
             .order_by(QuizAttempt.submitted_at)
         ).all()
         return [
-            {"id": a.id, "score": a.score, "maxScore": a.max_score, "submittedAt": a.submitted_at.isoformat()}
+            {
+                "id": a.id,
+                "score": a.score,
+                "maxScore": a.max_score,
+                "feedback": a.feedback,
+                "submittedAt": a.submitted_at.isoformat(),
+            }
             for a in attempts
         ]
+
+
+def list_lesson_quiz_attempts(lesson_id: str, teacher_id: str) -> list[dict]:
+    """Teacher-facing (unlike `list_attempts_for_student`, scoped to one
+    student): every attempt across every student for this lesson's quizzes,
+    most recent first. Used by feedback_agent (agents/feedback/tools.py) to
+    see who's attempted a quiz and how they did before writing feedback --
+    no frontend route yet, chat is the only way to reach this today."""
+    with SessionLocal() as session:
+        lesson = _find_lesson_row(session, lesson_id)
+        if not lesson:
+            raise ValueError(f"No lesson with id {lesson_id}")
+        _check_owner(lesson.module.course, teacher_id)
+        quiz_ids = [q.id for q in lesson.quizzes]
+        if not quiz_ids:
+            return []
+        attempts = session.scalars(
+            select(QuizAttempt).where(QuizAttempt.quiz_id.in_(quiz_ids)).order_by(QuizAttempt.submitted_at.desc())
+        ).all()
+        student_ids = {a.student_id for a in attempts}
+        students = {u.id: u for u in session.scalars(select(User).where(User.id.in_(student_ids)))} if student_ids else {}
+        return [
+            {
+                "id": a.id,
+                "studentId": a.student_id,
+                "studentName": students[a.student_id].name,
+                "score": a.score,
+                "maxScore": a.max_score,
+                "feedback": a.feedback,
+                "submittedAt": a.submitted_at.isoformat(),
+            }
+            for a in attempts
+        ]
+
+
+def set_quiz_attempt_feedback(attempt_id: str, teacher_id: str, feedback: str) -> dict:
+    with SessionLocal() as session:
+        attempt = session.get(QuizAttempt, attempt_id)
+        if not attempt:
+            raise ValueError(f"No quiz attempt with id {attempt_id}")
+        _check_owner(attempt.quiz.lesson.module.course, teacher_id)
+        attempt.feedback = feedback
+        session.commit()
+        return {
+            "id": attempt.id,
+            "studentId": attempt.student_id,
+            "score": attempt.score,
+            "maxScore": attempt.max_score,
+            "feedback": attempt.feedback,
+            "submittedAt": attempt.submitted_at.isoformat(),
+        }

@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { enrollInCourse, fetchCatalog, fetchCourse, fetchMyEnrolledCourses } from "../api.ts";
 import type { Session } from "../auth.ts";
+import { IconMedia } from "../components/icons.tsx";
+import TAChat from "../components/TAChat.tsx";
+import { StudentStoryViewer } from "../story/StoryPlayer.tsx";
+import { listReadyStories } from "../studentAiApi.ts";
 import type { Course, CoursePreview, Lesson } from "../types.ts";
+import CourseTabs from "./CourseTabs.tsx";
+import { getCompletedLessonIds } from "./traditionalData.ts";
 
 interface CourseDetailProps {
   session: Session;
@@ -17,6 +23,8 @@ export default function CourseDetail({ session }: CourseDetailProps) {
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [storyModules, setStoryModules] = useState<Set<string>>(() => new Set());
+  const [watching, setWatching] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -49,6 +57,14 @@ export default function CourseDetail({ session }: CourseDetailProps) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Which modules have a story a student can watch. A failure just means no buttons.
+  useEffect(() => {
+    if (isTeacher || !enrolled) return;
+    listReadyStories(courseId)
+      .then((stories) => setStoryModules(new Set(stories.map((s) => s.moduleId))))
+      .catch(() => setStoryModules(new Set()));
+  }, [courseId, isTeacher, enrolled]);
 
   async function handleEnroll() {
     setEnrolling(true);
@@ -87,12 +103,17 @@ export default function CourseDetail({ session }: CourseDetailProps) {
   }
 
   const canOpenLessons = isTeacher || enrolled;
+  const completed = !isTeacher && enrolled ? getCompletedLessonIds(session.user.id, courseId) : new Set<string>();
+  const totalLessons = data.weeks.reduce((n, w) => n + w.lessons.length, 0);
+  const completedCount = data.weeks.reduce((n, w) => n + w.lessons.filter((l) => completed.has(l.id)).length, 0);
 
   return (
     <div className="educa-page">
       <Link to={isTeacher ? "/educa" : "/educa/catalog"} className="hint-inline educa-back">← Back</Link>
       <h2 className="educa-page-title">{data.title}</h2>
       <p className="course-audience">{data.audience}</p>
+      <CourseTabs courseId={courseId} isTeacher={isTeacher} />
+      {!isTeacher && enrolled && <TAChat courseId={courseId} />}
 
       {isTeacher ? (
         <p className="hint">
@@ -102,6 +123,13 @@ export default function CourseDetail({ session }: CourseDetailProps) {
         <button type="button" className="btn btn-primary" disabled={enrolling} onClick={handleEnroll}>
           {enrolling ? "Enrolling…" : "Enroll in this course"}
         </button>
+      ) : totalLessons > 0 ? (
+        <div className="progress-block">
+          <div className="progress-bar">
+            <div className="progress-bar-fill" style={{ width: `${Math.round((completedCount / totalLessons) * 100)}%` }} />
+          </div>
+          <span className="hint-inline">{completedCount} of {totalLessons} lessons complete</span>
+        </div>
       ) : null}
 
       {!canOpenLessons ? (
@@ -112,6 +140,11 @@ export default function CourseDetail({ session }: CourseDetailProps) {
             <div className="week-block" key={w.week}>
               <div className="week-head">
                 <span className="week-head-title">Week {w.week} — {w.title}</span>
+                {!isTeacher && enrolled && w.moduleId && storyModules.has(w.moduleId) && (
+                  <button type="button" className="btn week-story-btn" onClick={() => setWatching(w.moduleId!)}>
+                    <IconMedia /> Watch story
+                  </button>
+                )}
               </div>
               {w.lessons.length === 0 ? (
                 <p className="hint">No published lessons yet.</p>
@@ -124,7 +157,7 @@ export default function CourseDetail({ session }: CourseDetailProps) {
                   >
                     <div className="lesson-row-top">
                       <strong>{l.title}</strong>
-                      {isTeacher && (() => {
+                      {isTeacher ? (() => {
                         const full = l as Lesson;
                         const status = full.published ? "published" : full.approved ? "approved" : "draft";
                         return (
@@ -132,7 +165,9 @@ export default function CourseDetail({ session }: CourseDetailProps) {
                             {full.published ? "Published" : full.approved ? "Approved" : "Draft"}
                           </span>
                         );
-                      })()}
+                      })() : completed.has(l.id) ? (
+                        <span className="status-pill status-published">Done</span>
+                      ) : null}
                     </div>
                     <p className="lesson-objective-text">{l.objective}</p>
                   </Link>
@@ -142,6 +177,7 @@ export default function CourseDetail({ session }: CourseDetailProps) {
           ))}
         </div>
       )}
+      {watching && <StudentStoryViewer courseId={courseId} moduleId={watching} onClose={() => setWatching(null)} />}
     </div>
   );
 }

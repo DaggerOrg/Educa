@@ -1,6 +1,7 @@
 import { useState } from "react";
+import ModuleVideoPanel from "../story/ModuleVideoPanel.tsx";
 import type { Course, Week } from "../types.ts";
-import { IconChevronDown } from "./icons.tsx";
+import { IconChevronDown, IconMedia } from "./icons.tsx";
 
 interface SyllabusViewProps {
   course: Course;
@@ -24,6 +25,7 @@ export default function SyllabusView({ course, onSelect }: SyllabusViewProps) {
   // losing scroll position on long syllabi -- keyed by week number/title
   // since lessons don't carry a separate week id.
   const [collapsed, setCollapsed] = useState<Set<string | number>>(() => new Set());
+  const [storyFor, setStoryFor] = useState<{ moduleId: string; label: string } | null>(null);
 
   const { total, published } = countLessons(course.weeks);
 
@@ -57,11 +59,22 @@ export default function SyllabusView({ course, onSelect }: SyllabusViewProps) {
           const weekPublished = w.lessons.filter((l) => l.published).length;
           return (
             <div className="week-block" key={key}>
-              <button type="button" className="week-head" onClick={() => toggleWeek(key)} aria-expanded={!isCollapsed}>
-                <IconChevronDown className={`week-chevron${isCollapsed ? " is-collapsed" : ""}`} />
-                <span className="week-head-title">Week {w.week} — {w.title}</span>
-                <span className="week-head-count">{weekPublished}/{w.lessons.length}</span>
-              </button>
+              <div className="week-head-row">
+                <button type="button" className="week-head" onClick={() => toggleWeek(key)} aria-expanded={!isCollapsed}>
+                  <IconChevronDown className={`week-chevron${isCollapsed ? " is-collapsed" : ""}`} />
+                  <span className="week-head-title">Week {w.week} — {w.title}</span>
+                  <span className="week-head-count">{weekPublished}/{w.lessons.length}</span>
+                </button>
+                {w.moduleId && (
+                  <button
+                    type="button"
+                    className="btn week-story-btn"
+                    onClick={() => setStoryFor({ moduleId: w.moduleId!, label: `Week ${w.week}` })}
+                  >
+                    <IconMedia /> Story video
+                  </button>
+                )}
+              </div>
               {!isCollapsed && (
                 w.lessons.length === 0 ? (
                   <p className="hint">No lessons yet.</p>
@@ -90,6 +103,7 @@ export default function SyllabusView({ course, onSelect }: SyllabusViewProps) {
           );
         })}
       </div>
+      {storyFor && <ModuleVideoPanel moduleId={storyFor.moduleId} weekLabel={storyFor.label} onClose={() => setStoryFor(null)} />}
     </section>
   );
 }

@@ -1,0 +1,701 @@
+{
+  "title": "English Language — B1 Curriculum",
+  "nodes": [
+    {
+      "id": "concept-present-simple",
+      "type": "concept",
+      "name": "Present Simple",
+      "status": "needs_review",
+      "position": {
+        "x": 0,
+        "y": 36
+      },
+      "description": "Used for habits, routines, facts, and general truths.",
+      "category": "grammar",
+      "cefrLevel": "A1",
+      "aliases": [
+        "Simple Present"
+      ]
+    },
+    {
+      "id": "concept-have-has",
+      "type": "concept",
+      "name": "Have / Has",
+      "status": "needs_review",
+      "position": {
+        "x": 0,
+        "y": 120
+      },
+      "description": "Auxiliary verb used to form the present perfect (have/has + past participle).",
+      "category": "grammar",
+      "cefrLevel": "A1"
+    },
+    {
+      "id": "concept-past-simple",
+      "type": "concept",
+      "name": "Past Simple",
+      "status": "needs_review",
+      "position": {
+        "x": 260,
+        "y": 120
+      },
+      "description": "Used for completed actions at a specific time in the past.",
+      "category": "grammar",
+      "cefrLevel": "A2",
+      "aliases": [
+        "Simple Past"
+      ]
+    },
+    {
+      "id": "concept-past-time",
+      "type": "concept",
+      "name": "Past-time concepts",
+      "status": "needs_review",
+      "position": {
+        "x": 0,
+        "y": 204
+      },
+      "description": "Time expressions and reference points (yesterday, last year, in 2020) that anchor an action in the past.",
+      "category": "grammar",
+      "cefrLevel": "A2"
+    },
+    {
+      "id": "concept-past-participle",
+      "type": "concept",
+      "name": "Past Participle",
+      "status": "needs_review",
+      "position": {
+        "x": 520,
+        "y": 36
+      },
+      "description": "The verb form used with have/has to form the present perfect (e.g. gone, seen, visited).",
+      "category": "grammar",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "concept-present-perfect",
+      "type": "concept",
+      "name": "Present Perfect",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 120
+      },
+      "description": "Used to describe experiences or events connected to the present.",
+      "category": "grammar",
+      "cefrLevel": "B1",
+      "aliases": [
+        "Present Perfect Tense"
+      ]
+    },
+    {
+      "id": "concept-present-perfect-continuous",
+      "type": "concept",
+      "name": "Present Perfect Continuous",
+      "status": "needs_review",
+      "position": {
+        "x": 1040,
+        "y": 36
+      },
+      "description": "Used to emphasize the duration of an action that started in the past and continues now.",
+      "category": "grammar",
+      "cefrLevel": "B2"
+    },
+    {
+      "id": "concept-conditionals",
+      "type": "concept",
+      "name": "Conditionals",
+      "status": "needs_review",
+      "position": {
+        "x": 520,
+        "y": 120
+      },
+      "description": "Sentence structures describing hypothetical or real cause-and-effect situations.",
+      "category": "grammar",
+      "cefrLevel": "B2"
+    },
+    {
+      "id": "concept-travel-vocabulary",
+      "type": "concept",
+      "name": "Travel Vocabulary",
+      "status": "needs_review",
+      "position": {
+        "x": 260,
+        "y": 36
+      },
+      "description": "Core words and phrases for describing trips, transport, and destinations.",
+      "category": "vocabulary",
+      "cefrLevel": "A2"
+    },
+    {
+      "id": "concept-life-experiences-vocabulary",
+      "type": "concept",
+      "name": "Life Experiences Vocabulary",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 204
+      },
+      "description": "Vocabulary for talking about things you have done, been, or achieved.",
+      "category": "vocabulary",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "concept-reading-inference",
+      "type": "concept",
+      "name": "Reading Inference",
+      "status": "needs_review",
+      "position": {
+        "x": 520,
+        "y": 204
+      },
+      "description": "Drawing conclusions from a text that aren't directly stated.",
+      "category": "reading-skills",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "concept-paragraph-structure",
+      "type": "concept",
+      "name": "Paragraph Structure",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 36
+      },
+      "description": "Organizing a paragraph around a topic sentence, supporting detail, and conclusion.",
+      "category": "writing-skills",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "skill-reading",
+      "type": "skill",
+      "name": "Reading",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 348
+      }
+    },
+    {
+      "id": "skill-writing",
+      "type": "skill",
+      "name": "Writing",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 432
+      }
+    },
+    {
+      "id": "skill-listening",
+      "type": "skill",
+      "name": "Listening",
+      "status": "needs_review",
+      "position": {
+        "x": 0,
+        "y": 348
+      }
+    },
+    {
+      "id": "skill-speaking",
+      "type": "skill",
+      "name": "Speaking",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 516
+      }
+    },
+    {
+      "id": "level-a1",
+      "type": "level",
+      "name": "A1",
+      "status": "needs_review",
+      "position": {
+        "x": 0,
+        "y": 1344
+      }
+    },
+    {
+      "id": "level-a2",
+      "type": "level",
+      "name": "A2",
+      "status": "needs_review",
+      "position": {
+        "x": 260,
+        "y": 1344
+      }
+    },
+    {
+      "id": "level-b1",
+      "type": "level",
+      "name": "B1",
+      "status": "needs_review",
+      "position": {
+        "x": 520,
+        "y": 1344
+      }
+    },
+    {
+      "id": "level-b2",
+      "type": "level",
+      "name": "B2",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 1344
+      }
+    },
+    {
+      "id": "level-c1",
+      "type": "level",
+      "name": "C1",
+      "status": "needs_review",
+      "position": {
+        "x": 1040,
+        "y": 1344
+      }
+    },
+    {
+      "id": "level-c2",
+      "type": "level",
+      "name": "C2",
+      "status": "needs_review",
+      "position": {
+        "x": 1300,
+        "y": 1344
+      }
+    },
+    {
+      "id": "exercise-reading-travel",
+      "type": "exercise",
+      "name": "Reading: Travel Experiences",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 804
+      },
+      "description": "A short article about a backpacking trip, followed by comprehension questions.",
+      "category": "activity",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "exercise-listening-trip-abroad",
+      "type": "exercise",
+      "name": "Listening: A Trip Abroad",
+      "status": "needs_review",
+      "position": {
+        "x": 0,
+        "y": 804
+      },
+      "description": "An audio recording of a traveler describing a memorable trip.",
+      "category": "activity",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "exercise-speaking-have-you-ever",
+      "type": "exercise",
+      "name": "Speaking: Have You Ever…?",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 888
+      },
+      "description": "Pair-work speaking task practicing present perfect questions about life experiences.",
+      "category": "activity",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "exercise-writing-memorable-experience",
+      "type": "exercise",
+      "name": "Writing: My Memorable Experience",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 972
+      },
+      "description": "A guided paragraph-writing task describing a memorable personal experience.",
+      "category": "activity",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "exercise-present-perfect-quiz",
+      "type": "exercise",
+      "name": "Present Perfect Quiz",
+      "status": "needs_review",
+      "position": {
+        "x": 1040,
+        "y": 804
+      },
+      "description": "A 10-question quiz assessing present perfect form and usage.",
+      "category": "assessment",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "objective-describe-past-experiences",
+      "type": "learning_objective",
+      "name": "Students can describe past life experiences.",
+      "status": "needs_review",
+      "position": {
+        "x": 1040,
+        "y": 660
+      },
+      "category": "objective",
+      "cefrLevel": "B1"
+    },
+    {
+      "id": "resource-grammar-book-u7",
+      "type": "resource",
+      "name": "English Grammar Book — Unit 7",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 1116
+      },
+      "description": "Core grammar reference, unit 7 covers the present perfect.",
+      "category": "textbook"
+    },
+    {
+      "id": "resource-teacher-guide-u7",
+      "type": "resource",
+      "name": "Teacher Guide — Unit 7",
+      "status": "needs_review",
+      "position": {
+        "x": 780,
+        "y": 1200
+      },
+      "description": "Lesson plans and warm-up activities for teaching unit 7.",
+      "category": "teacher_guide"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-1",
+      "sourceId": "concept-present-simple",
+      "targetId": "concept-past-simple",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-2",
+      "sourceId": "concept-past-simple",
+      "targetId": "concept-past-participle",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-3",
+      "sourceId": "concept-past-participle",
+      "targetId": "concept-present-perfect",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-4",
+      "sourceId": "concept-have-has",
+      "targetId": "concept-present-perfect",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-5",
+      "sourceId": "concept-past-time",
+      "targetId": "concept-present-perfect",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-6",
+      "sourceId": "concept-present-perfect",
+      "targetId": "concept-present-perfect-continuous",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-7",
+      "sourceId": "concept-past-simple",
+      "targetId": "concept-conditionals",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-8",
+      "sourceId": "concept-present-perfect",
+      "targetId": "objective-describe-past-experiences",
+      "type": "prerequisite_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-9",
+      "sourceId": "concept-present-simple",
+      "targetId": "level-a1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-10",
+      "sourceId": "concept-have-has",
+      "targetId": "level-a1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-11",
+      "sourceId": "concept-past-simple",
+      "targetId": "level-a2",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-12",
+      "sourceId": "concept-travel-vocabulary",
+      "targetId": "level-a2",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-13",
+      "sourceId": "concept-past-time",
+      "targetId": "level-a2",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-14",
+      "sourceId": "concept-past-participle",
+      "targetId": "level-b1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-15",
+      "sourceId": "concept-present-perfect",
+      "targetId": "level-b1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-16",
+      "sourceId": "concept-life-experiences-vocabulary",
+      "targetId": "level-b1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-17",
+      "sourceId": "concept-reading-inference",
+      "targetId": "level-b1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-18",
+      "sourceId": "concept-paragraph-structure",
+      "targetId": "level-b1",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-19",
+      "sourceId": "concept-present-perfect-continuous",
+      "targetId": "level-b2",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-20",
+      "sourceId": "concept-conditionals",
+      "targetId": "level-b2",
+      "type": "belongs_to_level",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-21",
+      "sourceId": "concept-present-perfect",
+      "targetId": "skill-speaking",
+      "type": "practices",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-22",
+      "sourceId": "concept-present-perfect",
+      "targetId": "skill-writing",
+      "type": "practices",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-23",
+      "sourceId": "concept-present-perfect",
+      "targetId": "skill-reading",
+      "type": "practices",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-24",
+      "sourceId": "concept-travel-vocabulary",
+      "targetId": "skill-speaking",
+      "type": "practices",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-25",
+      "sourceId": "concept-life-experiences-vocabulary",
+      "targetId": "skill-speaking",
+      "type": "practices",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-26",
+      "sourceId": "concept-reading-inference",
+      "targetId": "skill-reading",
+      "type": "practices",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-27",
+      "sourceId": "exercise-reading-travel",
+      "targetId": "skill-reading",
+      "type": "part_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-28",
+      "sourceId": "exercise-listening-trip-abroad",
+      "targetId": "skill-listening",
+      "type": "part_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-29",
+      "sourceId": "exercise-speaking-have-you-ever",
+      "targetId": "skill-speaking",
+      "type": "part_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-30",
+      "sourceId": "exercise-writing-memorable-experience",
+      "targetId": "skill-writing",
+      "type": "part_of",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-31",
+      "sourceId": "exercise-reading-travel",
+      "targetId": "concept-travel-vocabulary",
+      "type": "uses",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-32",
+      "sourceId": "exercise-listening-trip-abroad",
+      "targetId": "concept-travel-vocabulary",
+      "type": "uses",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-33",
+      "sourceId": "exercise-speaking-have-you-ever",
+      "targetId": "concept-present-perfect",
+      "type": "uses",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-34",
+      "sourceId": "exercise-speaking-have-you-ever",
+      "targetId": "concept-life-experiences-vocabulary",
+      "type": "uses",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-35",
+      "sourceId": "exercise-writing-memorable-experience",
+      "targetId": "concept-present-perfect",
+      "type": "uses",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-36",
+      "sourceId": "exercise-present-perfect-quiz",
+      "targetId": "concept-present-perfect",
+      "type": "assesses",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-37",
+      "sourceId": "concept-present-perfect",
+      "targetId": "resource-grammar-book-u7",
+      "type": "explained_by",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-38",
+      "sourceId": "resource-teacher-guide-u7",
+      "targetId": "concept-present-perfect",
+      "type": "teaches",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-39",
+      "sourceId": "exercise-speaking-have-you-ever",
+      "targetId": "resource-teacher-guide-u7",
+      "type": "supported_by",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-40",
+      "sourceId": "concept-present-perfect-continuous",
+      "targetId": "concept-present-perfect",
+      "type": "reinforces",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    },
+    {
+      "id": "rel-41",
+      "sourceId": "concept-life-experiences-vocabulary",
+      "targetId": "concept-present-perfect",
+      "type": "reinforces",
+      "evidenceType": "teacher_created",
+      "teacherApproved": false
+    }
+  ]
+}

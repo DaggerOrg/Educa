@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { fetchCourse, fetchStudentLesson } from "../api.ts";
+import { fetchCourse, fetchCoursePersona, fetchStudentLesson } from "../api.ts";
 import type { Session } from "../auth.ts";
-import type { Course, Lesson, StudentLesson } from "../types.ts";
+import { IconCheck, IconEdit, IconSparkle } from "../components/icons.tsx";
+import TAChat from "../components/TAChat.tsx";
+import NotesPanel from "../notes/NotesPanel.tsx";
+import type { Course, Lesson, StudentLesson, TeacherPersona } from "../types.ts";
+import Assignment from "./Assignment.tsx";
+import Discussion from "./Discussion.tsx";
 import QuizTaker from "./QuizTaker.tsx";
+import { getCompletedLessonIds, setLessonComplete } from "./traditionalData.ts";
 
 interface LessonViewProps {
   session: Session;
@@ -24,6 +30,14 @@ export default function LessonView({ session }: LessonViewProps) {
   const [studentLesson, setStudentLesson] = useState<StudentLesson | null>(null);
   const [teacherLesson, setTeacherLesson] = useState<Lesson | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [complete, setComplete] = useState(false);
+  const [persona, setPersona] = useState<TeacherPersona | null>(null);
+  const [watchingPersona, setWatchingPersona] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isTeacher) fetchCoursePersona(courseId).then(setPersona).catch(() => setPersona(null));
+  }, [courseId, isTeacher]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -46,6 +60,16 @@ export default function LessonView({ session }: LessonViewProps) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    if (!isTeacher) setComplete(getCompletedLessonIds(session.user.id, courseId).has(lessonId));
+  }, [isTeacher, session.user.id, courseId, lessonId]);
+
+  function toggleComplete() {
+    const next = !complete;
+    setLessonComplete(session.user.id, courseId, lessonId, next);
+    setComplete(next);
+  }
+
   if (error) {
     return (
       <div className="educa-page">
@@ -67,10 +91,50 @@ export default function LessonView({ session }: LessonViewProps) {
   const speakerNotes = isTeacher ? teacherLesson?.content?.speakerNotes ?? "" : studentLesson?.speakerNotes ?? "";
 
   return (
-    <div className="educa-page">
+    <div className={`educa-page${!isTeacher && notesOpen ? " has-notes" : ""}`}>
       <Link to={`/educa/courses/${courseId}`} className="hint-inline educa-back">← Back to course</Link>
-      <h2 className="educa-page-title">{lesson.title}</h2>
+      <div className="lesson-view-head">
+        <h2 className="educa-page-title">{lesson.title}</h2>
+        {!isTeacher && (
+          <div className="lesson-view-actions">
+            <button
+              type="button"
+              className={`btn${notesOpen ? " is-active" : ""}`}
+              aria-pressed={notesOpen}
+              onClick={() => setNotesOpen(!notesOpen)}
+            >
+              <IconEdit /> My notes
+            </button>
+            <button
+              type="button"
+              className={`btn completion-toggle${complete ? " btn-primary" : ""}`}
+              onClick={toggleComplete}
+            >
+              <IconCheck /> {complete ? "Completed" : "Mark as complete"}
+            </button>
+          </div>
+        )}
+      </div>
       <p className="panel-objective">{lesson.objective}</p>
+
+      {!isTeacher && persona && (
+        <div className="creative-card persona-playback-card">
+          {watchingPersona ? (
+            <>
+              <div className="creative-thumb creative-thumb-mock creative-thumb-mock-video">
+                <IconSparkle />
+              </div>
+              <span className="status-pill creative-preview-badge">
+                Preview — avatar narration isn't connected to a rendering provider yet
+              </span>
+            </>
+          ) : (
+            <button type="button" className="btn btn-primary" onClick={() => setWatchingPersona(true)}>
+              <IconSparkle /> Watch {persona.name} explain this
+            </button>
+          )}
+        </div>
+      )}
 
       <div className="slides-list">
         {slides.map((s, i) => (
@@ -105,9 +169,25 @@ export default function LessonView({ session }: LessonViewProps) {
           <p className="hint">No quiz yet.</p>
         )
       ) : studentLesson?.quiz ? (
-        <QuizTaker lessonId={lessonId} quiz={studentLesson.quiz} />
+        <QuizTaker
+          lessonId={lessonId}
+          quiz={studentLesson.quiz}
+          onResult={(res) => {
+            if (res.correct) {
+              setLessonComplete(session.user.id, courseId, lessonId, true);
+              setComplete(true);
+            }
+          }}
+        />
       ) : (
         <p className="hint">No quiz for this lesson.</p>
+      )}
+
+      <Assignment courseId={courseId} lessonId={lessonId} lessonTitle={lesson.title} session={session} />
+      <Discussion courseId={courseId} lessonId={lessonId} lessonTitle={lesson.title} session={session} />
+      {!isTeacher && <TAChat courseId={courseId} />}
+      {!isTeacher && notesOpen && (
+        <NotesPanel courseId={courseId} lessonId={lessonId} userId={session.user.id} onClose={() => setNotesOpen(false)} />
       )}
     </div>
   );

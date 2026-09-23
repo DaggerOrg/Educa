@@ -18,6 +18,7 @@ from agno.tools import tool
 from pydantic import BaseModel, Field
 
 from ... import store
+from ... import audit
 from ...auth.context import current_user_id
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ def generate_lesson_slides(lesson_id: str, slides: List[SlideDraft], speaker_not
         logger.error("generate_lesson_slides: no lesson with id %s", lesson_id)
         raise ValueError(f"No lesson with id {lesson_id}")
     logger.info("generate_lesson_slides: saved slides for lesson %s", lesson_id)
+    audit.record("generate_lesson_slides", lesson_id, f"Generated {len(slides)} slide(s)")
     return lesson
 
 

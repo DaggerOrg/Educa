@@ -37,6 +37,7 @@ from agno.tools import tool
 from pydantic import BaseModel, Field
 
 from ... import store
+from ... import audit
 from ...auth.context import current_user_id
 
 logger = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ def create_syllabus(title: str, audience: str, weeks: List[WeekDraft]) -> dict:
         teacher_id=teacher_id, title=title, audience=audience, weeks=[w.model_dump() for w in weeks]
     )
     logger.info("create_syllabus: created course %s with %d week(s)", result["id"], len(result["weeks"]))
+    audit.record("create_syllabus", result["id"], f"Created syllabus '{title}' ({len(weeks)} weeks)")
     return result
 
 
@@ -90,6 +92,7 @@ def update_syllabus(course_id: str, weeks: List[WeekDraft], title: str = "", aud
         weeks=[w.model_dump() for w in weeks],
     )
     logger.info("update_syllabus: course now has %d week(s)", len(result["weeks"]))
+    audit.record("update_syllabus", course_id, f"Updated syllabus ({len(weeks)} weeks)")
     return result
 
 

@@ -1,0 +1,23 @@
+Retrieval-Augmented Generation (RAG) is a pattern for grounding a language
+model's answers in an external knowledge source instead of relying only on
+what the model memorized during training.
+
+A RAG pipeline has two stages. First, an ingestion stage splits source
+documents into chunks, embeds each chunk into a vector using an embedding
+model, and stores the vectors in a vector database. Second, a query stage
+embeds the user's question with the same embedding model, retrieves the
+most similar chunks from the vector database, and passes those chunks to
+the language model as context alongside the original question so it can
+generate a grounded answer.
+
+RAG is useful because it lets a model answer questions about private,
+proprietary, or frequently changing data without retraining the model
+itself, and because it lets the model cite exactly which source chunks it
+used, which reduces hallucination compared to asking the model to answer
+purely from memory.
+
+RAG can be combined with a knowledge graph in a pattern sometimes called
+GraphRAG: the graph supplies structured relationships between entities
+(for example, which concepts depend on which other concepts), while the
+vector store supplies unstructured supporting text, and both are given to
+the model together.

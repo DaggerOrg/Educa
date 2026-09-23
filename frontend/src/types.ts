@@ -44,6 +44,7 @@ export interface Lesson {
 }
 
 export interface Week {
+  moduleId?: string;
   week: number;
   title: string;
   lessons: Lesson[];
@@ -62,6 +63,43 @@ export interface Material {
   filename: string;
   charCount: number;
   chunkCount: number;
+}
+
+// AI Creative: a personal, cross-course media library (see
+// backend/app/creative.py) -- deliberately not tied to a Course/Lesson.
+export interface CreativeAsset {
+  id: string;
+  kind: "image" | "video";
+  filename: string;
+  contentType: string;
+  createdAt: string;
+}
+
+// Teacher Persona: a teacher's enrolled video/voice likeness (see
+// backend/app/persona.py) -- one per teacher. No rendering provider is
+// wired up; playback is a clearly-labeled mock.
+export interface TeacherPersona {
+  id: string;
+  name: string;
+  trainingAssetId: string;
+  consentedAt: string;
+  createdAt: string;
+}
+
+// AI Teaching Assistant: a per-course, teacher-authored AI persona
+// students chat with (see backend/app/teaching_assistant.py) -- real,
+// not mocked.
+export interface TeachingAssistant {
+  id: string;
+  courseId: string;
+  name: string;
+  instructions: string;
+  createdAt: string;
+}
+
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
 }
 
 export type Role = "teacher" | "student";
@@ -127,6 +165,7 @@ export interface LessonPreview {
 }
 
 export interface WeekPreview {
+  moduleId?: string;
   week: number;
   title: string;
   lessons: LessonPreview[];
@@ -189,4 +228,14 @@ export interface Purchase {
   courseId: string;
   priceCents: number;
   purchasedAt: string;
+}
+
+// A past Ask AI conversation -- see backend/app/chat_history.py. `id` is
+// the Agno session id, also usable as a CopilotChat `threadId` to resume it.
+// Reuses the existing `ChatTurn` shape above (role/content) for its transcript.
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
 }

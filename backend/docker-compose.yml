@@ -1,4 +1,22 @@
 services:
+  api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://educa:educa@postgres:5432/educa
+      REDIS_URL: redis://redis:6379/0
+      CURRICULUM_S3_ENDPOINT_URL: http://minio:9000
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -11,6 +29,45 @@ services:
       - "55432:5432"
     volumes:
       - educa-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U educa -d educa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # curriculum_ai/jobs -- background document processing queue.
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # curriculum_ai/storage -- S3-compatible object storage for uploaded
+  # PDFs (CURRICULUM_S3_ENDPOINT_URL points the api/worker at this
+  # locally; leave that env var unset in production to talk to real S3).
+  minio:
+    # Docker Hub's `minio/minio` is no longer pullable without a login
+    # ("pull access denied") -- quay.io is MinIO's current public registry.
+    image: quay.io/minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: educa
+      MINIO_ROOT_PASSWORD: educa123
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # web console
+    volumes:
+      - educa-minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   educa-postgres:
+  educa-minio:

@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { IconChevronLeft, IconEdit, IconObjective } from "./icons.tsx";
+import { IconChat, IconChevronLeft, IconEdit, IconObjective } from "./icons.tsx";
 
-export type CourseTool = "syllabus" | "exercises";
+export type CourseTool = "syllabus" | "exercises" | "ta";
 
 interface ToolEntry {
   key: CourseTool;
   label: string;
+  description: string;
   icon: typeof IconEdit;
 }
 
@@ -14,8 +15,9 @@ interface ToolEntry {
 // today's existing Syllabus/Lesson drill-down), but it needs a slot in
 // this rail too so there's a way back to it once another tool is active.
 const TOOLS: ToolEntry[] = [
-  { key: "syllabus", label: "Syllabus", icon: IconEdit },
-  { key: "exercises", label: "Exercises Builder", icon: IconObjective },
+  { key: "syllabus", label: "Syllabus", description: "Course outline", icon: IconEdit },
+  { key: "exercises", label: "Exercises Builder", description: "Quizzes & exercises", icon: IconObjective },
+  { key: "ta", label: "AI Teaching Assistant", description: "AI tutor setup", icon: IconChat },
 ];
 
 interface CourseToolsRailProps {
@@ -29,12 +31,13 @@ export default function CourseToolsRail({ active, onSelect }: CourseToolsRailPro
   return (
     <nav className={`tools-rail${expanded ? "" : " is-collapsed"}`}>
       <div className="tools-rail-items">
-        {TOOLS.map(({ key, label, icon: Icon }) => (
+        {TOOLS.map(({ key, label, description, icon: Icon }) => (
           <button
             type="button"
             key={key}
             className={`nav-drawer-btn${active === key ? " is-active" : ""}`}
-            title={label}
+            aria-label={label}
+            data-tooltip={description}
             aria-current={active === key ? "page" : undefined}
             onClick={() => onSelect(key)}
           >

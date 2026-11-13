@@ -48,6 +48,10 @@ Access to every student endpoint goes through
 
 Env: `STUDENT_AI_DAILY_TOKEN_CAP` (default 300000 tokens/user/day).
 
+**Proposed:** AI annotations on the Sketch tab (circling mistakes, formula
+suggestions, hint modes) are specified in [sketch-ai.md](sketch-ai.md). Not
+built yet.
+
 ## Module story videos
 
 A teacher opens **Story video** on a week in Studio. Flow:

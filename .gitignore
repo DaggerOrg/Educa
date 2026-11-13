@@ -5,6 +5,7 @@ backend/__pycache__/
 backend/**/__pycache__/
 backend/.env
 backend/tmp/
+backend/evals/reports/
 backend/rag/samples/
 
 ### Frontend (Node)

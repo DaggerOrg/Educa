@@ -72,6 +72,18 @@ class FakeQueue:
         self.enqueued.append((fn, args, kwargs))
 
 
+@pytest.mark.integration
+def test_the_generated_sample_pdf_is_a_readable_multi_page_document(sample_pdf_bytes):
+    from pypdf import PdfReader
+    import io
+
+    reader = PdfReader(io.BytesIO(sample_pdf_bytes))
+    assert len(reader.pages) == 21
+    text = reader.pages[0].extract_text()
+    assert "Velocity is the rate of change of position" in text or "Acceleration is the rate" in text
+    assert len(text) > 400
+
+
 @pytest.fixture
 def fake_queue(monkeypatch):
     queue = FakeQueue()
